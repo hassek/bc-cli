@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+# Default
+INTEGRATION=false
+
+# Parse args
+for arg in "$@"; do
+	if [ "$arg" = "--integration" ]; then
+    RUN_INTEGRATION_TESTS=true INTEGRATION=true INTERACTIVE=true go test -v -run TestE2EInteractiveFullLifecycle -timeout 30m
+	fi
+done
+
+# Setup the way we want to run tests here
+go test ./... -count=1 -timeout 30m
