@@ -64,16 +64,18 @@ grinding preferences. You can have:
 We'll help you allocate all {{.TotalQuantity}} kg across your preferences.`
 
 const PreferenceHeaderTemplate = `{{repeat "─" 60}}
-┌─ Preference #{{.PreferenceNum}} ─────────────────────────────────────┐
-│ Allocating from: {{.TotalQuantity}} kg total{{printf "%-24s" ""}}│
-│ Remaining: {{.Remaining}} kg{{if .LowRemaining}} ⚠️  (almost done!){{end}}{{printf "%-18s" ""}}│
-└──────────────────────────────────────────────────────┘
+┌─ Preference #{{.PreferenceNum}} ──────────────────────────────────────────┐
+│ {{printf "%-58s" (printf "Allocating from: %d kg total" .TotalQuantity)}} │{{if .LowRemaining}}
+│ {{printf "%-58s" (printf "Remaining: %d kg ⚠️  (almost done!)" .Remaining)}} │{{else}}
+│ {{printf "%-58s" (printf "Remaining: %d kg" .Remaining)}} │{{end}}
+└────────────────────────────────────────────────────────────┘
 `
 
 const ProgressBarTemplate = `
-┌──────────────────────────────────────────────────────┐
-│ Progress: {{progressBar .Current .Total 30}} {{.Current}}/{{.Total}} kg{{if ge .Current .Total}} ✓{{end}}{{printf "%-5s" ""}}│
-└──────────────────────────────────────────────────────┘`
+┌────────────────────────────────────────────────────────────┐{{if ge .Current .Total}}
+│ {{printf "%-58s" (printf "Progress: %s %d/%d kg ✓" (progressBar .Current .Total 30) .Current .Total)}} │{{else}}
+│ {{printf "%-58s" (printf "Progress: %s %d/%d kg" (progressBar .Current .Total 30) .Current .Total)}} │{{end}}
+└────────────────────────────────────────────────────────────┘`
 
 const OrderSummaryTemplate = `Your Order Summary:
 ┌─────────────────────────────────────────────────────────┐

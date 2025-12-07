@@ -77,7 +77,7 @@ export BASE_HOSTNAME=http://localhost:8000
   - Default API URL: `https://api.butler.coffee`
   - **Quantity limits**: Configurable min/max kg per month for subscriptions
     - `min_quantity_kg`: Minimum kilos per month (default: 1)
-    - `max_quantity_kg`: Maximum kilos per month (default: 50)
+    - `max_quantity_kg`: Maximum kilos per month (default: 10)
     - These values can be customized by editing `~/.butler-coffee/config.json`
 
 ### Templates (`templates/`)

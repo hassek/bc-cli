@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/hassek/bc-cli/api"
+	"github.com/hassek/bc-cli/cmd/order"
+	"github.com/hassek/bc-cli/cmd/prompts"
 	"github.com/hassek/bc-cli/config"
 	"github.com/hassek/bc-cli/templates"
 	"github.com/hassek/bc-cli/utils"
@@ -261,7 +263,7 @@ func handlePause(client *api.Client, subscription *api.Subscription) (*api.Subsc
 		return nil, err
 	}
 
-	confirmed, err := promptConfirm("Pause subscription? (You can resume it anytime)")
+	confirmed, err := prompts.PromptConfirm("Pause subscription? (You can resume it anytime)")
 	if err != nil || !confirmed {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Pause"}); err != nil {
 			fmt.Println("Pause cancelled.")
@@ -295,7 +297,7 @@ func handleResume(client *api.Client, subscription *api.Subscription) (*api.Subs
 		return nil, err
 	}
 
-	confirmed, err := promptConfirm("Resume subscription?")
+	confirmed, err := prompts.PromptConfirm("Resume subscription?")
 	if err != nil || !confirmed {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Resume"}); err != nil {
 			fmt.Println("Resume cancelled.")
@@ -340,10 +342,10 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		return nil, fmt.Errorf("could not find tier information")
 	}
 
-	// Use default of 2kg or the minimum quantity, whichever is larger
-	defaultQty := max(2, cfg.MinQuantityKg)
+	// Use default preference quantity or the minimum quantity, whichever is larger
+	defaultQty := max(order.DefaultPreferenceQuantityKg, cfg.MinQuantityKg)
 
-	totalQuantity, err := promptQuantityInt("New total quantity per month (kg)", cfg.MinQuantityKg, cfg.MaxQuantityKg, defaultQty)
+	totalQuantity, err := prompts.PromptQuantityInt("New total quantity per month (kg)", cfg.MinQuantityKg, cfg.MaxQuantityKg, defaultQty)
 	if err != nil {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
 			fmt.Println("Update cancelled.")
@@ -353,7 +355,7 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 
 	fmt.Printf("\n✓ New quantity: %d kg per month\n\n", totalQuantity)
 
-	wantsSplit, err := promptConfirm("Would you like different grind methods?")
+	wantsSplit, err := prompts.PromptConfirm("Would you like different grind methods?")
 	if err != nil {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
 			fmt.Println("Update cancelled.")
@@ -364,12 +366,12 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 	var lineItems []api.OrderLineItem
 
 	if !wantsSplit {
-		lineItems, err = configureUniformOrder(totalQuantity)
+		lineItems, err = order.ConfigureUniformOrder(totalQuantity)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		lineItems, err = configureLineItems(totalQuantity)
+		lineItems, err = order.ConfigureLineItems(totalQuantity)
 		if err != nil {
 			return nil, err
 		}
@@ -380,12 +382,12 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		if item.GrindType == "whole_bean" {
 			formattedItems[i] = fmt.Sprintf("%d kg → Whole beans for %s",
 				item.QuantityKg,
-				brewingMethodDisplay(item.BrewingMethod))
+				order.BrewingMethodDisplay(item.BrewingMethod))
 		} else {
-			grindDesc := getGrindDescription(item.BrewingMethod)
+			grindDesc := order.GetGrindDescription(item.BrewingMethod)
 			formattedItems[i] = fmt.Sprintf("%d kg → Ground for %s (%s)",
 				item.QuantityKg,
-				brewingMethodDisplay(item.BrewingMethod),
+				order.BrewingMethodDisplay(item.BrewingMethod),
 				grindDesc)
 		}
 	}
@@ -400,7 +402,7 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		return nil, err
 	}
 
-	confirmed, err := promptConfirm("Update subscription with these preferences?")
+	confirmed, err := prompts.PromptConfirm("Update subscription with these preferences?")
 	if err != nil || !confirmed {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
 			fmt.Println("Update cancelled.")
@@ -470,7 +472,7 @@ func handleCancel(client *api.Client, subscription *api.Subscription) (*api.Subs
 		return nil, err
 	}
 
-	confirmed, err := promptConfirm("Type 'y' to permanently cancel")
+	confirmed, err := prompts.PromptConfirm("Type 'y' to permanently cancel")
 	if err != nil || !confirmed {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Cancellation"}); err != nil {
 			fmt.Println("Cancellation aborted.")
@@ -569,12 +571,12 @@ func displaySubscriptionInfo(client *api.Client, subscription *api.Subscription)
 			if pref.GrindType == "whole_bean" {
 				data.LineItems[i] = fmt.Sprintf("%d kg → Whole beans for %s",
 					qty,
-					brewingMethodDisplay(pref.BrewingMethod))
+					order.BrewingMethodDisplay(pref.BrewingMethod))
 			} else {
-				grindDesc := getGrindDescription(pref.BrewingMethod)
+				grindDesc := order.GetGrindDescription(pref.BrewingMethod)
 				data.LineItems[i] = fmt.Sprintf("%d kg → Ground for %s (%s)",
 					qty,
-					brewingMethodDisplay(pref.BrewingMethod),
+					order.BrewingMethodDisplay(pref.BrewingMethod),
 					grindDesc)
 			}
 		}

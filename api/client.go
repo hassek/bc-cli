@@ -75,14 +75,16 @@ func (c *Client) doRequest(method, path string, body any, requireAuth bool) (*ht
 
 		// Attempt to refresh the token
 		if refreshErr := c.RefreshToken(); refreshErr != nil {
+			logDebug("Failed to refresh token on 401: %v", refreshErr)
 			return resp, nil // Return original 401 response
 		}
 
 		// Retry the request with the new token
 		if body != nil {
-			// Re-read the body for the retry
+			// Re-marshal the body for the retry
 			jsonData, err := json.Marshal(body)
 			if err != nil {
+				logDebug("Failed to marshal body for retry: %v", err)
 				return resp, nil // Return original 401 response
 			}
 			reqBody = bytes.NewBuffer(jsonData)
@@ -90,6 +92,7 @@ func (c *Client) doRequest(method, path string, body any, requireAuth bool) (*ht
 
 		retryReq, err := http.NewRequest(method, url, reqBody)
 		if err != nil {
+			logDebug("Failed to create retry request: %v", err)
 			return resp, nil // Return original 401 response
 		}
 
@@ -99,6 +102,7 @@ func (c *Client) doRequest(method, path string, body any, requireAuth bool) (*ht
 
 		retryResp, err := c.HTTPClient.Do(retryReq)
 		if err != nil {
+			logDebug("Retry request failed: %v", err)
 			return resp, nil // Return original 401 response
 		}
 
@@ -106,6 +110,13 @@ func (c *Client) doRequest(method, path string, body any, requireAuth bool) (*ht
 	}
 
 	return resp, nil
+}
+
+// logDebug logs debug messages (currently a no-op, but can be enhanced)
+func logDebug(format string, args ...any) {
+	// In production, this could write to a debug log file
+	// For now, we'll keep it silent to avoid cluttering user output
+	_ = fmt.Sprintf(format, args...)
 }
 
 type APIError struct {

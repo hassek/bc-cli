@@ -69,7 +69,8 @@ func (p *SubscriptionPreference) GetQuantity() int {
 	return int(qty + 0.5)
 }
 
-type AvailableSubscription struct {
+// AvailablePlan represents both subscription tiers and one-time purchase products
+type AvailablePlan struct {
 	ID            string   `json:"id"`
 	Tier          string   `json:"tier"`
 	Name          string   `json:"name"`
@@ -80,6 +81,10 @@ type AvailableSubscription struct {
 	Features      []string `json:"features"`
 	IsSubscription bool    `json:"is_subscription"`
 }
+
+// AvailableSubscription is an alias for backwards compatibility
+// Deprecated: Use AvailablePlan instead
+type AvailableSubscription = AvailablePlan
 
 type ListSubscriptionsResponse struct {
 	Meta struct {
@@ -100,24 +105,35 @@ func (c *Client) ListSubscriptions() ([]Subscription, error) {
 		return nil, err
 	}
 
+	// Validate each subscription
+	for i := range result.Data {
+		if err := validateSubscription(&result.Data[i]); err != nil {
+			return nil, fmt.Errorf("invalid subscription at index %d: %w", i, err)
+		}
+	}
+
 	return result.Data, nil
 }
 
-type AvailableSubscriptionsResponse struct {
+type AvailablePlansResponse struct {
 	Meta struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
 	} `json:"meta"`
-	Data []AvailableSubscription `json:"data"`
+	Data []AvailablePlan `json:"data"`
 }
 
-func (c *Client) GetAvailableSubscriptions() ([]AvailableSubscription, error) {
+// AvailableSubscriptionsResponse is an alias for backwards compatibility
+// Deprecated: Use AvailablePlansResponse instead
+type AvailableSubscriptionsResponse = AvailablePlansResponse
+
+func (c *Client) GetAvailableSubscriptions() ([]AvailablePlan, error) {
 	resp, err := c.doRequest("GET", "/api/core/v1/subscriptions/available?is_subscription=true", nil, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var result AvailableSubscriptionsResponse
+	var result AvailablePlansResponse
 	if err := c.handleResponse(resp, &result); err != nil {
 		return nil, err
 	}
@@ -126,13 +142,13 @@ func (c *Client) GetAvailableSubscriptions() ([]AvailableSubscription, error) {
 }
 
 // GetAvailableProducts retrieves all available one-time purchase products
-func (c *Client) GetAvailableProducts() ([]AvailableSubscription, error) {
+func (c *Client) GetAvailableProducts() ([]AvailablePlan, error) {
 	resp, err := c.doRequest("GET", "/api/core/v1/subscriptions/available?is_subscription=false", nil, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var result AvailableSubscriptionsResponse
+	var result AvailablePlansResponse
 	if err := c.handleResponse(resp, &result); err != nil {
 		return nil, err
 	}
@@ -141,7 +157,7 @@ func (c *Client) GetAvailableProducts() ([]AvailableSubscription, error) {
 }
 
 // GetSubscriptionPricing retrieves pricing information for a specific tier
-func (c *Client) GetSubscriptionPricing(tier string) (*AvailableSubscription, error) {
+func (c *Client) GetSubscriptionPricing(tier string) (*AvailablePlan, error) {
 	plans, err := c.GetAvailableSubscriptions()
 	if err != nil {
 		return nil, err
@@ -167,6 +183,10 @@ func (c *Client) GetSubscription(subscriptionID string) (*Subscription, error) {
 	var result SubscriptionActionResponse
 	if err := c.handleResponse(resp, &result); err != nil {
 		return nil, err
+	}
+
+	if err := validateSubscription(&result.Data); err != nil {
+		return nil, fmt.Errorf("invalid subscription response: %w", err)
 	}
 
 	return &result.Data, nil

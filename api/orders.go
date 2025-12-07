@@ -99,6 +99,10 @@ func (c *Client) CreateOrder(req CreateOrderRequest) (*Order, error) {
 		return nil, err
 	}
 
+	if err := validateOrder(&result.Data); err != nil {
+		return nil, fmt.Errorf("invalid order response: %w", err)
+	}
+
 	return &result.Data, nil
 }
 
@@ -115,6 +119,10 @@ func (c *Client) CreateCheckoutSession(orderID string) (*CheckoutSession, error)
 		return nil, err
 	}
 
+	if err := validateCheckoutSession(&result.Data); err != nil {
+		return nil, fmt.Errorf("invalid checkout session: %w", err)
+	}
+
 	return &result.Data, nil
 }
 
@@ -129,6 +137,10 @@ func (c *Client) GetOrder(orderID string) (*Order, error) {
 	var result CreateOrderResponse
 	if err := c.handleResponse(resp, &result); err != nil {
 		return nil, err
+	}
+
+	if err := validateOrder(&result.Data); err != nil {
+		return nil, fmt.Errorf("invalid order response: %w", err)
 	}
 
 	return &result.Data, nil

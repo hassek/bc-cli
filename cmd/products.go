@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/hassek/bc-cli/api"
+	"github.com/hassek/bc-cli/cmd/order"
+	"github.com/hassek/bc-cli/cmd/prompts"
 	"github.com/hassek/bc-cli/config"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -110,7 +112,7 @@ func runProducts(cmd *cobra.Command, args []string) error {
 	// Ask if user wants to purchase (if authenticated)
 	if cfg.IsAuthenticated() {
 		fmt.Println()
-		confirmed, err := promptConfirm(fmt.Sprintf("Would you like to purchase %s now", selectedProduct.Name))
+		confirmed, err := prompts.PromptConfirm(fmt.Sprintf("Would you like to purchase %s now", selectedProduct.Name))
 		if err == nil && confirmed {
 			// User wants to purchase - start order configuration flow
 			return createProductOrder(cfg, client, selectedProduct)
@@ -152,7 +154,7 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	fmt.Println("\n" + strings.Repeat("─", 60) + "\n")
 
 	// Step 1: Ask for quantity (number of items, not kg)
-	quantity, err := promptQuantityInt("How many would you like to purchase?", 1, 100, 1)
+	quantity, err := prompts.PromptQuantityInt("How many would you like to purchase?", 1, 100, 1)
 	if err != nil {
 		return err
 	}
@@ -162,7 +164,7 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	// Step 2: Ask for grind type
 	fmt.Println("\n  How would you like your coffee prepared?")
 	fmt.Println()
-	grindType, err := selectGrindType()
+	grindType, err := order.SelectGrindType()
 	if err != nil {
 		return err
 	}
@@ -176,7 +178,7 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	}
 
 	// Step 3: Ask for brewing method (ALWAYS)
-	brewingMethod, err := selectBrewingMethod(grindType)
+	brewingMethod, err := order.SelectBrewingMethod(grindType)
 	if err != nil {
 		return err
 	}
@@ -184,10 +186,10 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	// Confirmation message
 	fmt.Printf("\n✓ Perfect! Your order: %d x %s - ", quantity, product.Name)
 	if grindType == "whole_bean" {
-		fmt.Printf("whole beans for %s.\n", brewingMethodDisplay(brewingMethod))
+		fmt.Printf("whole beans for %s.\n", order.BrewingMethodDisplay(brewingMethod))
 	} else {
-		grindDesc := getGrindDescription(brewingMethod)
-		fmt.Printf("ground for %s (%s).\n", brewingMethodDisplay(brewingMethod), grindDesc)
+		grindDesc := order.GetGrindDescription(brewingMethod)
+		fmt.Printf("ground for %s (%s).\n", order.BrewingMethodDisplay(brewingMethod), grindDesc)
 	}
 	fmt.Println()
 
@@ -196,7 +198,7 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 		return err
 	}
 
-	confirmed, err := promptConfirm("Looks good! Proceed to checkout?")
+	confirmed, err := prompts.PromptConfirm("Looks good! Proceed to checkout?")
 	if err != nil {
 		return err
 	}
@@ -280,10 +282,10 @@ func showProductOrderSummary(product api.AvailableSubscription, quantity int, gr
 
 	fmt.Println("  Preparation:")
 	if grindType == "whole_bean" {
-		fmt.Printf("    • Whole beans for %s\n", brewingMethodDisplay(brewingMethod))
+		fmt.Printf("    • Whole beans for %s\n", order.BrewingMethodDisplay(brewingMethod))
 	} else {
-		grindDesc := getGrindDescription(brewingMethod)
-		fmt.Printf("    • Ground for %s (%s)\n", brewingMethodDisplay(brewingMethod), grindDesc)
+		grindDesc := order.GetGrindDescription(brewingMethod)
+		fmt.Printf("    • Ground for %s (%s)\n", order.BrewingMethodDisplay(brewingMethod), grindDesc)
 	}
 
 	fmt.Println("\n" + strings.Repeat("═", 60) + "\n")

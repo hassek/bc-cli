@@ -14,6 +14,9 @@ const (
 	ConfigFile         = "config.json"
 	DefaultMinQuantity = 1  // Minimum kg per month
 	DefaultMaxQuantity = 10 // Maximum kg per month
+
+	// Token expiry safety margin - consider token expired this many seconds before actual expiration
+	TokenExpirySafetyMarginSeconds = 30
 )
 
 type Config struct {
@@ -119,8 +122,9 @@ func (c *Config) IsTokenExpired() bool {
 		return true
 	}
 
-	// Consider token expired 30 seconds before actual expiration for safety margin
-	return time.Now().Add(30 * time.Second).After(expiresAt)
+	// Consider token expired before actual expiration for safety margin
+	safetyMargin := time.Duration(TokenExpirySafetyMarginSeconds) * time.Second
+	return time.Now().Add(safetyMargin).After(expiresAt)
 }
 
 func (c *Config) IsRefreshTokenExpired() bool {
