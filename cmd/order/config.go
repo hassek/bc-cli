@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultPreferenceQuantityKg = 2 // Default quantity for new preferences
+	DefaultPreferenceQuantity = 2 // Default quantity for new preferences
 )
 
 // ConfigureUniformOrder guides the user through configuring a uniform order (all same grind/brew method)
@@ -41,7 +41,7 @@ func ConfigureUniformOrder(totalQuantity int) ([]api.OrderLineItem, error) {
 	}
 
 	// Confirmation message
-	fmt.Printf("\n✓ Perfect! All %d kg will be ", totalQuantity)
+	fmt.Printf("\n✓ Perfect! All %d will be ", totalQuantity)
 	if grindType == "whole_bean" {
 		fmt.Printf("whole beans, roasted for %s.\n", BrewingMethodDisplay(brewingMethod))
 	} else {
@@ -52,7 +52,7 @@ func ConfigureUniformOrder(totalQuantity int) ([]api.OrderLineItem, error) {
 	// Create single line item with full quantity
 	lineItems := []api.OrderLineItem{
 		{
-			QuantityKg:    totalQuantity,
+			Quantity:      totalQuantity,
 			GrindType:     grindType,
 			BrewingMethod: brewingMethod,
 		},
@@ -81,24 +81,24 @@ func ConfigureLineItems(totalQuantity int) ([]api.OrderLineItem, error) {
 		// Prompt for quantity with smart defaults
 		maxQty := remaining
 		defaultQty := remaining
-		if remaining > DefaultPreferenceQuantityKg {
-			defaultQty = min(DefaultPreferenceQuantityKg, remaining)
+		if remaining > DefaultPreferenceQuantity {
+			defaultQty = min(DefaultPreferenceQuantity, remaining)
 		}
 
-		quantity, err := prompts.PromptQuantityInt("  How much for this preference? (kg)", 1, maxQty, defaultQty)
+		quantity, err := prompts.PromptQuantityInt("  How much for this preference?", 1, maxQty, defaultQty)
 		if err != nil {
 			return nil, err
 		}
 
 		// Show allocation confirmation
 		if quantity >= remaining {
-			fmt.Printf("\n✓ Allocating %d kg (this will complete your order!)\n\n", quantity)
+			fmt.Printf("\n✓ Allocating %d (this will complete your order!)\n\n", quantity)
 		} else {
-			fmt.Printf("\n✓ Allocating %d kg\n\n", quantity)
+			fmt.Printf("\n✓ Allocating %d\n\n", quantity)
 		}
 
 		// Prompt for grind type with explanation
-		fmt.Printf("  How would you like these %d kg prepared?\n\n", quantity)
+		fmt.Printf("  How would you like these %d prepared?\n\n", quantity)
 		grindType, err := SelectGrindType()
 		if err != nil {
 			return nil, err
@@ -119,13 +119,13 @@ func ConfigureLineItems(totalQuantity int) ([]api.OrderLineItem, error) {
 		}
 
 		lineItems = append(lineItems, api.OrderLineItem{
-			QuantityKg:    quantity,
+			Quantity:      quantity,
 			GrindType:     grindType,
 			BrewingMethod: brewingMethod,
 		})
 
 		// Updated confirmation message
-		fmt.Printf("\n✓ Added: %d kg ", quantity)
+		fmt.Printf("\n✓ Added: %d ", quantity)
 		if grindType == "whole_bean" {
 			fmt.Printf("whole beans for %s", BrewingMethodDisplay(brewingMethod))
 		} else {
@@ -148,7 +148,7 @@ func ConfigureLineItems(totalQuantity int) ([]api.OrderLineItem, error) {
 
 	// Success message
 	fmt.Println("\n" + strings.Repeat("─", 60) + "\n")
-	fmt.Printf("🎉 Perfect! You've allocated all %d kg!\n\n", totalQuantity)
+	fmt.Printf("🎉 Perfect! You've allocated all %d!\n\n", totalQuantity)
 
 	return lineItems, nil
 }

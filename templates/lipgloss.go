@@ -38,11 +38,11 @@ func RenderPreferenceHeader(preferenceNum, totalQuantity, remaining int, lowRema
 	lines = append(lines, header)
 
 	// Allocating from line
-	allocLine := infoStyle.Render(fmt.Sprintf("Allocating from: %d kg total", totalQuantity))
+	allocLine := infoStyle.Render(fmt.Sprintf("Allocating from: %d total", totalQuantity))
 	lines = append(lines, allocLine)
 
 	// Remaining line
-	remainingText := fmt.Sprintf("Remaining: %d kg", remaining)
+	remainingText := fmt.Sprintf("Remaining: %d", remaining)
 	if lowRemaining {
 		remainingText += " ⚠️  (almost done!)"
 		lines = append(lines, warningStyle.Render(remainingText))
@@ -63,7 +63,7 @@ func RenderProgressBar(current, total int) string {
 	bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
 
 	// Build the progress text
-	progressText := fmt.Sprintf("Progress: %s %d/%d kg", bar, current, total)
+	progressText := fmt.Sprintf("Progress: %s %d/%d", bar, current, total)
 	if current >= total {
 		progressText += " ✓"
 	}
@@ -81,7 +81,7 @@ func RenderOrderSummary(tierName string, totalQuantity int, currency string, tot
 
 	// Order details
 	lines = append(lines, infoStyle.Render(fmt.Sprintf("Tier: %s", tierName)))
-	lines = append(lines, infoStyle.Render(fmt.Sprintf("Total: %d kg/month", totalQuantity)))
+	lines = append(lines, infoStyle.Render(fmt.Sprintf("Total: %d/month", totalQuantity)))
 	lines = append(lines, infoStyle.Render(fmt.Sprintf("Price: %s %.2f/%s", currency, totalPrice, billingPeriod)))
 	lines = append(lines, "")
 	lines = append(lines, infoStyle.Render("How your coffee will be prepared:"))

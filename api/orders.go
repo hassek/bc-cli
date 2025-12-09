@@ -7,7 +7,7 @@ import (
 
 // OrderLineItem represents a single coffee preference within an order (for sending to API)
 type OrderLineItem struct {
-	QuantityKg    int    `json:"quantity_kg"`
+	Quantity      int    `json:"quantity"`
 	GrindType     string `json:"grind_type"`
 	BrewingMethod string `json:"brewing_method"`
 	Notes         string `json:"notes,omitempty"`
@@ -16,7 +16,7 @@ type OrderLineItem struct {
 // OrderLineItemResponse represents a line item received from API (with string quantities)
 type OrderLineItemResponse struct {
 	ID            string `json:"id"`
-	QuantityKg    string `json:"quantity_kg"` // Django DecimalField serializes as string
+	Quantity      string `json:"quantity"` // Django DecimalField serializes as string
 	GrindType     string `json:"grind_type"`
 	BrewingMethod string `json:"brewing_method"`
 	Notes         string `json:"notes,omitempty"`
@@ -24,7 +24,7 @@ type OrderLineItemResponse struct {
 
 // GetQuantity returns the quantity as a float64
 func (o *OrderLineItemResponse) GetQuantity() float64 {
-	val, _ := strconv.ParseFloat(o.QuantityKg, 64)
+	val, _ := strconv.ParseFloat(o.Quantity, 64)
 	return val
 }
 
@@ -32,7 +32,7 @@ func (o *OrderLineItemResponse) GetQuantity() float64 {
 type Order struct {
 	ID                   string                      `json:"id"`
 	Tier                 string                      `json:"tier"`
-	TotalQuantityKg      string                      `json:"total_quantity_kg"` // Django DecimalField serializes as string
+	TotalQuantity        string                      `json:"total_quantity"` // Django DecimalField serializes as string
 	LineItems            []OrderLineItemResponse     `json:"line_items"`
 	Status               string                      `json:"status"`
 	ExpectedShipmentDate *string                     `json:"expected_shipment_date"`
@@ -41,16 +41,16 @@ type Order struct {
 
 // GetTotalQuantity returns the total quantity as a float64
 func (o *Order) GetTotalQuantity() float64 {
-	val, _ := strconv.ParseFloat(o.TotalQuantityKg, 64)
+	val, _ := strconv.ParseFloat(o.TotalQuantity, 64)
 	return val
 }
 
 // CreateOrderRequest is the request body for creating an order
 type CreateOrderRequest struct {
-	Tier            string          `json:"tier,omitempty"`
-	ProductID       string          `json:"product_id,omitempty"`
-	TotalQuantityKg int             `json:"total_quantity_kg"`
-	LineItems       []OrderLineItem `json:"line_items"`
+	Tier          string          `json:"tier,omitempty"`
+	ProductID     string          `json:"product_id,omitempty"`
+	TotalQuantity int             `json:"total_quantity"`
+	LineItems     []OrderLineItem `json:"line_items"`
 }
 
 // CreateOrderResponse is the response from creating an order

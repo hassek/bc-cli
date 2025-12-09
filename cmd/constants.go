@@ -8,7 +8,7 @@ const (
 	PaymentPollIntervalSeconds = 5      // Poll every 5 seconds
 
 	// Subscription preferences
-	DefaultPreferenceQuantityKg = 2 // Default quantity for new preferences
+	DefaultPreferenceQuantity = 2 // Default quantity for new preferences
 
 	// Token expiry safety margin
 	TokenExpirySafetyMarginSeconds = 30 // Consider token expired 30 seconds before actual expiration

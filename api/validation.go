@@ -55,7 +55,7 @@ func validateSubscription(sub *Subscription) error {
 	}
 
 	// Validate quantity if present
-	if sub.DefaultQuantityKg != "" {
+	if sub.DefaultQuantity != "" {
 		qty := sub.GetTotalQuantity()
 		if qty < 0 || qty > 1000 {
 			return fmt.Errorf("invalid quantity: %d (must be between 0 and 1000)", qty)

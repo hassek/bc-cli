@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"os/exec"
 	"runtime"
@@ -47,10 +46,8 @@ func TestE2EInteractiveFullLifecycle(t *testing.T) {
 	client := api.NewClient(testCfg)
 
 	// Generate unique test credentials
-	timestamp := time.Now().Unix()
-	randSuffix := rand.Intn(10000)
-	username := fmt.Sprintf("test_user_%d_%d", timestamp, randSuffix)
-	email := fmt.Sprintf("test_%d_%d@butler.test", timestamp, randSuffix)
+	username := "test_user"
+	email := "test_user@butler.test"
 	password := "TestPassword123!@#"
 
 	separator := "=" + strings.Repeat("=", 70)
@@ -201,17 +198,17 @@ func testInteractiveGetSubscriptions(t *testing.T, client *api.Client) string {
 
 func testInteractiveCreateOrder(t *testing.T, client *api.Client, tier string) string {
 	req := api.CreateOrderRequest{
-		Tier:            tier,
-		TotalQuantityKg: 5,
+		Tier:          tier,
+		TotalQuantity: 5,
 		LineItems: []api.OrderLineItem{
 			{
-				QuantityKg:    3,
+				Quantity:      3,
 				GrindType:     "whole_bean",
 				BrewingMethod: "espresso",
 				Notes:         "Interactive test - whole beans",
 			},
 			{
-				QuantityKg:    2,
+				Quantity:      2,
 				GrindType:     "ground",
 				BrewingMethod: "v60",
 				Notes:         "Interactive test - ground coffee",
@@ -336,15 +333,15 @@ func testInteractiveResumeSubscription(t *testing.T, client *api.Client, subscri
 func testInteractiveUpdateSubscription(t *testing.T, client *api.Client, subscriptionID string) {
 	// Update with different preferences
 	updateReq := api.UpdateSubscriptionRequest{
-		TotalQuantityKg: 8,
+		TotalQuantity: 8,
 		Preferences: []api.OrderLineItem{
 			{
-				QuantityKg:    5,
+				Quantity:      5,
 				GrindType:     "ground",
 				BrewingMethod: "french_press",
 			},
 			{
-				QuantityKg:    3,
+				Quantity:      3,
 				GrindType:     "whole_bean",
 				BrewingMethod: "aeropress",
 			},
@@ -378,15 +375,15 @@ func testInteractiveRestoreSubscription(t *testing.T, client *api.Client, subscr
 	var lineItems []api.OrderLineItem
 	for _, pref := range original.DefaultPreferences {
 		lineItems = append(lineItems, api.OrderLineItem{
-			QuantityKg:    pref.GetQuantity(),
+			Quantity:      pref.GetQuantity(),
 			GrindType:     pref.GrindType,
 			BrewingMethod: pref.BrewingMethod,
 		})
 	}
 
 	restoreReq := api.UpdateSubscriptionRequest{
-		TotalQuantityKg: original.GetTotalQuantity(),
-		Preferences:     lineItems,
+		TotalQuantity: original.GetTotalQuantity(),
+		Preferences:   lineItems,
 	}
 
 	subscription, err := client.UpdateSubscription(subscriptionID, restoreReq)

@@ -211,11 +211,11 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	// For products, we use ProductID instead of Tier
 	fmt.Print("\nCreating order... ")
 	order, err := client.CreateOrder(api.CreateOrderRequest{
-		ProductID:       product.ID,
-		TotalQuantityKg: quantity,
+		ProductID:     product.ID,
+		TotalQuantity: quantity,
 		LineItems: []api.OrderLineItem{
 			{
-				QuantityKg:    quantity,
+				Quantity:      quantity,
 				GrindType:     grindType,
 				BrewingMethod: brewingMethod,
 			},

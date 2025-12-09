@@ -119,7 +119,7 @@ func selectSubscriptionToManage(subscriptions []api.Subscription) (*api.Subscrip
 		if sub.ExpiresAt != nil {
 			item.ExpiresAt = utils.FormatTimestamp(*sub.ExpiresAt)
 		}
-		if sub.DefaultQuantityKg != "" {
+		if sub.DefaultQuantity != "" {
 			item.TotalQuantity = sub.GetTotalQuantity()
 			item.HasOrderDetails = true
 		}
@@ -141,7 +141,7 @@ func selectSubscriptionToManage(subscriptions []api.Subscription) (*api.Subscrip
 {{ if .Subscription.ID }}{{ "Tier:" | faint }}	{{ .Subscription.Tier }}
 {{ "Status:" | faint }}	{{ .Status }}
 {{ if .StartedAt }}{{ "Started:" | faint }}	{{ .StartedAt }}{{ end }}
-{{ if .HasOrderDetails }}{{ "Quantity:" | faint }}	{{ .TotalQuantity }} kg/month{{ end }}{{ end }}`,
+{{ if .HasOrderDetails }}{{ "Quantity:" | faint }}	{{ .TotalQuantity }}/month{{ end }}{{ end }}`,
 	}
 
 	prompt := promptui.Select{
@@ -343,9 +343,9 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 	}
 
 	// Use default preference quantity or the minimum quantity, whichever is larger
-	defaultQty := max(order.DefaultPreferenceQuantityKg, cfg.MinQuantityKg)
+	defaultQty := max(order.DefaultPreferenceQuantity, cfg.MinQuantity)
 
-	totalQuantity, err := prompts.PromptQuantityInt("New total quantity per month (kg)", cfg.MinQuantityKg, cfg.MaxQuantityKg, defaultQty)
+	totalQuantity, err := prompts.PromptQuantityInt("New total quantity per month", cfg.MinQuantity, cfg.MaxQuantity, defaultQty)
 	if err != nil {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
 			fmt.Println("Update cancelled.")
@@ -353,7 +353,7 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		return nil, nil
 	}
 
-	fmt.Printf("\n✓ New quantity: %d kg per month\n\n", totalQuantity)
+	fmt.Printf("\n✓ New quantity: %d per month\n\n", totalQuantity)
 
 	wantsSplit, err := prompts.PromptConfirm("Would you like different grind methods?")
 	if err != nil {
@@ -380,13 +380,13 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 	formattedItems := make([]string, len(lineItems))
 	for i, item := range lineItems {
 		if item.GrindType == "whole_bean" {
-			formattedItems[i] = fmt.Sprintf("%d kg → Whole beans for %s",
-				item.QuantityKg,
+			formattedItems[i] = fmt.Sprintf("%d → Whole beans for %s",
+				item.Quantity,
 				order.BrewingMethodDisplay(item.BrewingMethod))
 		} else {
 			grindDesc := order.GetGrindDescription(item.BrewingMethod)
-			formattedItems[i] = fmt.Sprintf("%d kg → Ground for %s (%s)",
-				item.QuantityKg,
+			formattedItems[i] = fmt.Sprintf("%d → Ground for %s (%s)",
+				item.Quantity,
 				order.BrewingMethodDisplay(item.BrewingMethod),
 				grindDesc)
 		}
@@ -412,8 +412,8 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 
 	fmt.Print("\nUpdating subscription... ")
 	updatedSub, err := client.UpdateSubscription(subscription.ID, api.UpdateSubscriptionRequest{
-		TotalQuantityKg: totalQuantity,
-		Preferences:     lineItems,
+		TotalQuantity: totalQuantity,
+		Preferences:   lineItems,
 	})
 	if err != nil {
 		fmt.Println("✗")
@@ -546,7 +546,7 @@ func displaySubscriptionInfo(client *api.Client, subscription *api.Subscription)
 	}
 
 	// Include order details if available
-	if subscription.DefaultQuantityKg != "" && len(subscription.DefaultPreferences) > 0 {
+	if subscription.DefaultQuantity != "" && len(subscription.DefaultPreferences) > 0 {
 		data.HasOrderDetails = true
 		data.TotalQuantity = subscription.GetTotalQuantity()
 
@@ -569,12 +569,12 @@ func displaySubscriptionInfo(client *api.Client, subscription *api.Subscription)
 		for i, pref := range subscription.DefaultPreferences {
 			qty := pref.GetQuantity()
 			if pref.GrindType == "whole_bean" {
-				data.LineItems[i] = fmt.Sprintf("%d kg → Whole beans for %s",
+				data.LineItems[i] = fmt.Sprintf("%d → Whole beans for %s",
 					qty,
 					order.BrewingMethodDisplay(pref.BrewingMethod))
 			} else {
 				grindDesc := order.GetGrindDescription(pref.BrewingMethod)
-				data.LineItems[i] = fmt.Sprintf("%d kg → Ground for %s (%s)",
+				data.LineItems[i] = fmt.Sprintf("%d → Ground for %s (%s)",
 					qty,
 					order.BrewingMethodDisplay(pref.BrewingMethod),
 					grindDesc)

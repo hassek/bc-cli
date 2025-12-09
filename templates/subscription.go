@@ -37,50 +37,50 @@ Let's configure your coffee order!
 {{repeat "─" 60}}
 
 How much coffee would you like per month?
-You can order anywhere from {{.MinQuantity}} kg to {{.MaxQuantity}} kg.
+You can order anywhere from {{.MinQuantity}} to {{.MaxQuantity}}.
 `
 
 const OrderSplitIntroTemplate = `{{repeat "─" 60}}
 
 Would you like your coffee prepared different ways?
 For example, you could get:
-  • 2 kg whole bean + 3 kg ground for espresso
-  • 2 kg ground for moka + 2 kg ground for v60 + 1 kg whole bean
+  • 2 whole bean + 3 ground for espresso
+  • 2 ground for moka + 2 ground for v60 + 1 whole bean
 
 Or keep it simple with everything the same way.`
 
 const UniformOrderIntroTemplate = `{{repeat "─" 60}}
 
-Great! Let's prepare all {{.TotalQuantity}} kg the same way.
+Great! Let's prepare all {{.TotalQuantity}} the same way.
 
 `
 
 const SplitOrderIntroTemplate = `{{repeat "─" 60}}
 
-Great! Now let's split your {{.TotalQuantity}} kg into different
+Great! Now let's split your {{.TotalQuantity}} into different
 grinding preferences. You can have:
   • Whole beans (you grind at home)
   • Pre-ground for specific brewing methods
-We'll help you allocate all {{.TotalQuantity}} kg across your preferences.`
+We'll help you allocate all {{.TotalQuantity}} across your preferences.`
 
 const PreferenceHeaderTemplate = `{{repeat "─" 60}}
 ┌─ Preference #{{.PreferenceNum}} ──────────────────────────────────────────┐
-│ {{printf "%-58s" (printf "Allocating from: %d kg total" .TotalQuantity)}} │{{if .LowRemaining}}
-│ {{printf "%-58s" (printf "Remaining: %d kg ⚠️  (almost done!)" .Remaining)}} │{{else}}
-│ {{printf "%-58s" (printf "Remaining: %d kg" .Remaining)}} │{{end}}
+│ {{printf "%-58s" (printf "Allocating from: %d total" .TotalQuantity)}} │{{if .LowRemaining}}
+│ {{printf "%-58s" (printf "Remaining: %d ⚠️  (almost done!)" .Remaining)}} │{{else}}
+│ {{printf "%-58s" (printf "Remaining: %d" .Remaining)}} │{{end}}
 └────────────────────────────────────────────────────────────┘
 `
 
 const ProgressBarTemplate = `
 ┌────────────────────────────────────────────────────────────┐{{if ge .Current .Total}}
-│ {{printf "%-58s" (printf "Progress: %s %d/%d kg ✓" (progressBar .Current .Total 30) .Current .Total)}} │{{else}}
-│ {{printf "%-58s" (printf "Progress: %s %d/%d kg" (progressBar .Current .Total 30) .Current .Total)}} │{{end}}
+│ {{printf "%-58s" (printf "Progress: %s %d/%d ✓" (progressBar .Current .Total 30) .Current .Total)}} │{{else}}
+│ {{printf "%-58s" (printf "Progress: %s %d/%d" (progressBar .Current .Total 30) .Current .Total)}} │{{end}}
 └────────────────────────────────────────────────────────────┘`
 
 const OrderSummaryTemplate = `Your Order Summary:
 ┌─────────────────────────────────────────────────────────┐
 │ {{printf "%-55s" (printf "Tier: %s" .TierName)}} │
-│ {{printf "%-55s" (printf "Total: %d kg/month" .TotalQuantity)}} │
+│ {{printf "%-55s" (printf "Total: %d/month" .TotalQuantity)}} │
 │ {{printf "%-55s" (printf "Price: %s %.2f/%s" .Currency .TotalPrice .BillingPeriod)}} │
 │ {{printf "%-55s" ""}} │
 │ {{printf "%-55s" "How your coffee will be prepared:"}} │
@@ -96,7 +96,7 @@ Opening checkout...
 const SuccessMessageTemplate = `
 🎉 Congratulations! Your subscription is now active!
 
-📦 Your first shipment of {{.TotalQuantity}} kg of fresh {{.TierName}} coffee
+📦 Your first shipment of {{.TotalQuantity}} of fresh {{.TierName}} coffee
    will be shipped within the next 7 days.
 
 ☕ Get ready for an amazing coffee experience!
@@ -155,7 +155,7 @@ Billing: {{.Price}} {{.Currency}}/{{.BillingPeriod}}
 {{end}}
 {{if .HasOrderDetails}}
 Current Order Configuration:
-  Total: {{.TotalQuantity}} kg per month
+  Total: {{.TotalQuantity}} per month
 {{range $i, $item := .LineItems}}  {{add $i 1}}. {{$item}}
 {{end}}{{end}}
 `
@@ -209,7 +209,7 @@ const UpdatePreferencesSummaryTemplate = `
 New Subscription Preferences:
 {{repeat "─" 60}}
 
-Total: {{.TotalQuantity}} kg per month
+Total: {{.TotalQuantity}} per month
 
 How your coffee will be prepared:
 {{range $i, $item := .LineItems}}  {{add $i 1}}. {{$item}}

@@ -16,7 +16,7 @@ func PromptQuantityInt(label string, min, max, defaultVal int) (int, error) {
 			return fmt.Errorf("please enter a valid whole number")
 		}
 		if val < min || val > max {
-			return fmt.Errorf("quantity must be between %d and %d kg", min, max)
+			return fmt.Errorf("quantity must be between %d and %d", min, max)
 		}
 		return nil
 	}

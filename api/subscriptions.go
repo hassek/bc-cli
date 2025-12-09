@@ -32,26 +32,26 @@ type Subscription struct {
 	StartedAt           *string                   `json:"started_at"`
 	ExpiresAt           *string                   `json:"expires_at"`
 	CreatedOn           string                    `json:"created_on"`
-	DefaultQuantityKg   string                    `json:"default_quantity_kg,omitempty"`   // Django DecimalField as string
+	DefaultQuantity     string                    `json:"default_quantity,omitempty"`   // Django DecimalField as string
 	DefaultPreferences  []SubscriptionPreference  `json:"default_preferences,omitempty"`   // From GetSubscription endpoint
 }
 
 // SubscriptionPreference represents a default coffee preference for a subscription
 type SubscriptionPreference struct {
 	ID            string `json:"id"`
-	QuantityKg    string `json:"quantity_kg"`    // Django DecimalField as string
+	Quantity      string `json:"quantity"`    // Django DecimalField as string
 	GrindType     string `json:"grind_type"`
 	BrewingMethod string `json:"brewing_method"`
 }
 
 // GetTotalQuantity returns the total quantity as an int
 func (s *Subscription) GetTotalQuantity() int {
-	if s.DefaultQuantityKg == "" {
+	if s.DefaultQuantity == "" {
 		return 0
 	}
 	// Parse and round to nearest int
 	var qty float64
-	if _, err := fmt.Sscanf(s.DefaultQuantityKg, "%f", &qty); err != nil {
+	if _, err := fmt.Sscanf(s.DefaultQuantity, "%f", &qty); err != nil {
 		return 0
 	}
 	return int(qty + 0.5)
@@ -59,11 +59,11 @@ func (s *Subscription) GetTotalQuantity() int {
 
 // GetQuantity returns the quantity for a preference as an int
 func (p *SubscriptionPreference) GetQuantity() int {
-	if p.QuantityKg == "" {
+	if p.Quantity == "" {
 		return 0
 	}
 	var qty float64
-	if _, err := fmt.Sscanf(p.QuantityKg, "%f", &qty); err != nil {
+	if _, err := fmt.Sscanf(p.Quantity, "%f", &qty); err != nil {
 		return 0
 	}
 	return int(qty + 0.5)
@@ -250,8 +250,8 @@ func (c *Client) CancelSubscription(subscriptionID string) (*Subscription, error
 }
 
 type UpdateSubscriptionRequest struct {
-	TotalQuantityKg int             `json:"total_quantity_kg,omitempty"`
-	Preferences     []OrderLineItem `json:"preferences,omitempty"`
+	TotalQuantity int             `json:"total_quantity,omitempty"`
+	Preferences   []OrderLineItem `json:"preferences,omitempty"`
 }
 
 // UpdateSubscription updates subscription preferences (quantity, line items)

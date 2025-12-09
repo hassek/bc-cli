@@ -154,9 +154,9 @@ func createTestConfig(t *testing.T) *config.Config {
 	// Note: This requires modifying config package to support custom paths
 	// For now, we'll create a config without saving to disk
 	cfg := &config.Config{
-		APIURL:        config.GetAPIURL(),
-		MinQuantityKg: config.DefaultMinQuantity,
-		MaxQuantityKg: config.DefaultMaxQuantity,
+		APIURL:      config.GetAPIURL(),
+		MinQuantity: config.DefaultMinQuantity,
+		MaxQuantity: config.DefaultMaxQuantity,
 	}
 
 	t.Logf("Created test config with API URL: %s (config path: %s)", cfg.APIURL, testConfigPath)
@@ -265,17 +265,17 @@ func testGetAvailableSubscriptions(t *testing.T, client *api.Client) string {
 func testCreateOrder(t *testing.T, client *api.Client, tier string) string {
 	// Create an order with multiple preferences
 	req := api.CreateOrderRequest{
-		Tier:            tier,
-		TotalQuantityKg: 5,
+		Tier:          tier,
+		TotalQuantity: 5,
 		LineItems: []api.OrderLineItem{
 			{
-				QuantityKg:    3,
+				Quantity:      3,
 				GrindType:     "whole_bean",
 				BrewingMethod: "espresso",
 				Notes:         "Test order - whole beans for espresso",
 			},
 			{
-				QuantityKg:    2,
+				Quantity:      2,
 				GrindType:     "ground",
 				BrewingMethod: "v60",
 				Notes:         "Test order - ground for pour over",
@@ -420,15 +420,15 @@ func testResumeSubscription(t *testing.T, client *api.Client, subscriptionID str
 func testUpdateSubscription(t *testing.T, client *api.Client, subscriptionID string, original *api.Subscription) {
 	// Update with different preferences
 	updateReq := api.UpdateSubscriptionRequest{
-		TotalQuantityKg: 8,
+		TotalQuantity: 8,
 		Preferences: []api.OrderLineItem{
 			{
-				QuantityKg:    5,
+				Quantity:      5,
 				GrindType:     "ground",
 				BrewingMethod: "french_press",
 			},
 			{
-				QuantityKg:    3,
+				Quantity:      3,
 				GrindType:     "whole_bean",
 				BrewingMethod: "aeropress",
 			},
@@ -469,15 +469,15 @@ func testRestoreSubscription(t *testing.T, client *api.Client, subscriptionID st
 	var lineItems []api.OrderLineItem
 	for _, pref := range original.DefaultPreferences {
 		lineItems = append(lineItems, api.OrderLineItem{
-			QuantityKg:    pref.GetQuantity(),
+			Quantity:      pref.GetQuantity(),
 			GrindType:     pref.GrindType,
 			BrewingMethod: pref.BrewingMethod,
 		})
 	}
 
 	restoreReq := api.UpdateSubscriptionRequest{
-		TotalQuantityKg: original.GetTotalQuantity(),
-		Preferences:     lineItems,
+		TotalQuantity: original.GetTotalQuantity(),
+		Preferences:   lineItems,
 	}
 
 	subscription, err := client.UpdateSubscription(subscriptionID, restoreReq)

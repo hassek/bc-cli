@@ -12,8 +12,8 @@ const (
 	DefaultAPIURL      = "https://api.butler.coffee"
 	ConfigDir          = ".butler-coffee"
 	ConfigFile         = "config.json"
-	DefaultMinQuantity = 1  // Minimum kg per month
-	DefaultMaxQuantity = 10 // Maximum kg per month
+	DefaultMinQuantity = 1  // Minimum quantity per month
+	DefaultMaxQuantity = 10 // Maximum quantity per month
 
 	// Token expiry safety margin - consider token expired this many seconds before actual expiration
 	TokenExpirySafetyMarginSeconds = 30
@@ -25,8 +25,8 @@ type Config struct {
 	RefreshToken          string `json:"refresh_token,omitempty"`
 	ExpiresAt             string `json:"expires_at,omitempty"`
 	RefreshTokenExpiresAt string `json:"refresh_token_expires_at,omitempty"`
-	MinQuantityKg         int    `json:"min_quantity_kg,omitempty"`
-	MaxQuantityKg         int    `json:"max_quantity_kg,omitempty"`
+	MinQuantity           int    `json:"min_quantity,omitempty"`
+	MaxQuantity           int    `json:"max_quantity,omitempty"`
 }
 
 func GetAPIURL() string {
@@ -55,9 +55,9 @@ func LoadConfig() (*Config, error) {
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return &Config{
-			APIURL:        apiURL,
-			MinQuantityKg: DefaultMinQuantity,
-			MaxQuantityKg: DefaultMaxQuantity,
+			APIURL:      apiURL,
+			MinQuantity: DefaultMinQuantity,
+			MaxQuantity: DefaultMaxQuantity,
 		}, nil
 	}
 
@@ -79,11 +79,11 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Set default quantity limits if not configured
-	if cfg.MinQuantityKg == 0 {
-		cfg.MinQuantityKg = DefaultMinQuantity
+	if cfg.MinQuantity == 0 {
+		cfg.MinQuantity = DefaultMinQuantity
 	}
-	if cfg.MaxQuantityKg == 0 {
-		cfg.MaxQuantityKg = DefaultMaxQuantity
+	if cfg.MaxQuantity == 0 {
+		cfg.MaxQuantity = DefaultMaxQuantity
 	}
 
 	return &cfg, nil

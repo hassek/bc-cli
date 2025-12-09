@@ -75,9 +75,9 @@ export BASE_HOSTNAME=http://localhost:8000
   - Token expiration uses 30-second safety margin
   - Supports `BASE_HOSTNAME` environment variable for API URL override
   - Default API URL: `https://api.butler.coffee`
-  - **Quantity limits**: Configurable min/max kg per month for subscriptions
-    - `min_quantity_kg`: Minimum kilos per month (default: 1)
-    - `max_quantity_kg`: Maximum kilos per month (default: 10)
+  - **Quantity limits**: Configurable min/max quantity per month for subscriptions
+    - `min_quantity`: Minimum quantity per month (default: 1)
+    - `max_quantity`: Maximum quantity per month (default: 10)
     - These values can be customized by editing `~/.butler-coffee/config.json`
 
 ### Templates (`templates/`)
@@ -101,7 +101,7 @@ The subscription purchase flow in `cmd/subscribe.go` is a multi-step interactive
 1. Display available subscriptions with active status for authenticated users
 2. Allow user to select a tier and view detailed information
 3. Configure order preferences:
-   - Total quantity (kg per month)
+   - Total quantity per month
    - Choice between uniform or split preferences
    - For each preference: grind type (whole bean vs ground) and brewing method
 4. Show order summary and confirm
@@ -116,8 +116,8 @@ The subscription management flow in `cmd/manage.go` provides comprehensive contr
 3. Display subscription details including:
    - Status, started date, and expiration/resume date
    - **Billing information**: Price, currency, and billing period (fetched from SubscriptionPlan)
-   - Current order configuration (total kg/month and default preferences with grind settings)
-   - Formatted display: "X kg → Whole beans for Espresso" or "X kg → Ground for V60 (medium)"
+   - Current order configuration (total quantity/month and default preferences with grind settings)
+   - Formatted display: "X → Whole beans for Espresso" or "X → Ground for V60 (medium)"
 4. Show available actions based on subscription status:
    - **Active subscriptions**: pause, update preferences, or cancel
    - **Paused subscriptions**: resume, update preferences, or cancel

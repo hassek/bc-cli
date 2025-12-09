@@ -177,18 +177,18 @@ func createOrderAndSubscribe(cfg *config.Config, client *api.Client, tier api.Av
 		MinQuantity int
 		MaxQuantity int
 	}{
-		MinQuantity: cfg.MinQuantityKg,
-		MaxQuantity: cfg.MaxQuantityKg,
+		MinQuantity: cfg.MinQuantity,
+		MaxQuantity: cfg.MaxQuantity,
 	}); err != nil {
 		return fmt.Errorf("failed to render template: %w", err)
 	}
 
-	totalQuantity, err := prompts.PromptQuantityInt("Total quantity per month (kg)", cfg.MinQuantityKg, cfg.MaxQuantityKg, cfg.MinQuantityKg)
+	totalQuantity, err := prompts.PromptQuantityInt("Total quantity per month", cfg.MinQuantity, cfg.MaxQuantity, cfg.MinQuantity)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("\n✓ Total: %d kg per month\n", totalQuantity)
+	fmt.Printf("\n✓ Total: %d per month\n", totalQuantity)
 
 	// Step 2: Ask if they want to split or keep uniform
 	if err := templates.RenderToStdout(templates.OrderSplitIntroTemplate, nil); err != nil {
@@ -233,9 +233,9 @@ func createOrderAndSubscribe(cfg *config.Config, client *api.Client, tier api.Av
 	// Step 4: Create order via API
 	fmt.Print("\nCreating order... ")
 	order, err := client.CreateOrder(api.CreateOrderRequest{
-		Tier:            tier.Tier,
-		TotalQuantityKg: totalQuantity,
-		LineItems:       lineItems,
+		Tier:          tier.Tier,
+		TotalQuantity: totalQuantity,
+		LineItems:     lineItems,
 	})
 	if err != nil {
 		fmt.Println("✗")
@@ -319,13 +319,13 @@ func showOrderSummary(tier api.AvailableSubscription, totalQuantity int, lineIte
 	formattedItems := make([]string, len(lineItems))
 	for i, item := range lineItems {
 		if item.GrindType == "whole_bean" {
-			formattedItems[i] = fmt.Sprintf("%d kg → Whole beans for %s",
-				item.QuantityKg,
+			formattedItems[i] = fmt.Sprintf("%d → Whole beans for %s",
+				item.Quantity,
 				order.BrewingMethodDisplay(item.BrewingMethod))
 		} else {
 			grindDesc := order.GetGrindDescription(item.BrewingMethod)
-			formattedItems[i] = fmt.Sprintf("%d kg → Ground for %s (%s)",
-				item.QuantityKg,
+			formattedItems[i] = fmt.Sprintf("%d → Ground for %s (%s)",
+				item.Quantity,
 				order.BrewingMethodDisplay(item.BrewingMethod),
 				grindDesc)
 		}

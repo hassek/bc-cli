@@ -25,10 +25,10 @@ func TestListSubscriptions(t *testing.T) {
 			}{Code: 200, Message: "Success"},
 			Data: []Subscription{
 				{
-					ID:                "sub-123",
-					Tier:              "butler",
-					Status:            "active",
-					DefaultQuantityKg: "5",
+					ID:              "sub-123",
+					Tier:            "butler",
+					Status:          "active",
+					DefaultQuantity: "5",
 				},
 			},
 		}
@@ -80,20 +80,20 @@ func TestGetSubscription(t *testing.T) {
 				Message string `json:"message"`
 			}{Code: 200, Message: "Success"},
 			Data: Subscription{
-				ID:                "sub-123",
-				Tier:              "butler",
-				Status:            "active",
-				DefaultQuantityKg: "5",
+				ID:              "sub-123",
+				Tier:            "butler",
+				Status:          "active",
+				DefaultQuantity: "5",
 				DefaultPreferences: []SubscriptionPreference{
 					{
 						ID:            "pref-1",
-						QuantityKg:    "3",
+						Quantity:      "3",
 						GrindType:     "whole_bean",
 						BrewingMethod: "espresso",
 					},
 					{
 						ID:            "pref-2",
-						QuantityKg:    "2",
+						Quantity:      "2",
 						GrindType:     "ground",
 						BrewingMethod: "v60",
 					},
@@ -266,8 +266,8 @@ func TestUpdateSubscription(t *testing.T) {
 			t.Errorf("Failed to decode request body: %v", err)
 		}
 
-		if reqBody.TotalQuantityKg != 10 {
-			t.Errorf("Expected total quantity 10, got %d", reqBody.TotalQuantityKg)
+		if reqBody.TotalQuantity != 10 {
+			t.Errorf("Expected total quantity 10, got %d", reqBody.TotalQuantity)
 		}
 
 		if len(reqBody.Preferences) != 1 {
@@ -280,9 +280,9 @@ func TestUpdateSubscription(t *testing.T) {
 				Message string `json:"message"`
 			}{Code: 200, Message: "Subscription updated"},
 			Data: Subscription{
-				ID:                "sub-123",
-				Status:            "active",
-				DefaultQuantityKg: "10",
+				ID:              "sub-123",
+				Status:          "active",
+				DefaultQuantity: "10",
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -297,10 +297,10 @@ func TestUpdateSubscription(t *testing.T) {
 	client := NewClient(cfg)
 
 	updateReq := UpdateSubscriptionRequest{
-		TotalQuantityKg: 10,
+		TotalQuantity: 10,
 		Preferences: []OrderLineItem{
 			{
-				QuantityKg:    10,
+				Quantity:      10,
 				GrindType:     "whole_bean",
 				BrewingMethod: "espresso",
 			},
@@ -331,7 +331,7 @@ func TestSubscriptionGetTotalQuantity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sub := &Subscription{DefaultQuantityKg: tt.quantity}
+			sub := &Subscription{DefaultQuantity: tt.quantity}
 			got := sub.GetTotalQuantity()
 			if got != tt.want {
 				t.Errorf("GetTotalQuantity() = %d, want %d", got, tt.want)
