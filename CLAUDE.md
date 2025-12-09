@@ -80,6 +80,24 @@ export BASE_HOSTNAME=http://localhost:8000
     - `max_quantity`: Maximum quantity per month (default: 10)
     - These values can be customized by editing `~/.butler-coffee/config.json`
 
+### TUI Layer (`tui/`)
+- **`tui/components/`**: Reusable bubbletea components
+  - `duck.go` - Animated duck component with idle and action states based on Butler Coffee logo
+  - `select.go` - List selection with cursor navigation and scrolling
+  - `input.go` - Validated number input
+  - `confirm.go` - Yes/no confirmation prompts
+- **`tui/models/`**: Composed models for specific use cases
+  - `product_picker.go` - Product browsing with duck animation
+  - `subscription_picker.go` - Subscription tier selection
+  - `manage_subscription_picker.go` - Subscription management picker
+  - `grind_selector.go` - Grind type selection
+  - `brew_selector.go` - Brewing method selection
+  - `action_menu.go` - Management action selection
+- **`tui/prompts/`**: Wrapper functions matching legacy API
+  - `PromptQuantityInt()` - Number input with validation
+  - `PromptConfirm()` - Yes/no confirmation
+- **`tui/styles/`**: Centralized lipgloss styles (cyan, green, yellow, faint)
+
 ### Templates (`templates/`)
 - **`templates/templates.go`**: Text template rendering with custom functions
 - **`templates/auth.go`**: Login, signup, and authentication UI templates
@@ -141,11 +159,21 @@ The subscription management flow in `cmd/manage.go` provides comprehensive contr
 
 ## Important Patterns
 
-### Interactive Prompts
-Uses `github.com/manifoldco/promptui` for interactive terminal UI:
-- `promptui.Select` for menu selections
-- `promptui.Prompt` for text input with validation
-- Custom templates for styled output
+### Interactive TUI
+Uses Bubble Tea (`github.com/charmbracelet/bubbletea`) for interactive terminal UI with animated duck:
+- **Duck Animation**: Every interactive screen features an animated duck based on the Butler Coffee logo
+  - Idle state: Gentle bobbing animation (500ms frame rate)
+  - Action state: Celebratory animation when user makes selections
+  - Returns to idle after action completes
+- **Components**: Reusable TUI components in `tui/components/`
+  - Select menus with cursor navigation (arrows, j/k, enter, esc)
+  - Validated number input
+  - Yes/no confirmations
+- **Styling**: Consistent color scheme using lipgloss
+  - Cyan for active items and duck
+  - Green for selected/confirmed items
+  - Yellow for duck accents (coffee, steam)
+  - Faint gray for details and help text
 
 ### Decimal Field Handling
 Django backend returns decimal fields as strings (e.g., `"2.5"`):
@@ -168,7 +196,9 @@ Django backend returns decimal fields as strings (e.g., `"2.5"`):
 ### go.mod
 - Go version: 1.25.4
 - Main framework: `github.com/spf13/cobra v1.10.1`
-- UI library: `github.com/manifoldco/promptui v0.9.0`
+- TUI framework: `github.com/charmbracelet/bubbletea` - Terminal UI framework
+- Styling: `github.com/charmbracelet/lipgloss` - Style definitions for TUI
+- Input components: `github.com/charmbracelet/bubbles` - Reusable Bubble Tea components
 
 ### Makefile
 Defines common tasks for building, installing dependencies, and managing pre-commit hooks.
@@ -235,3 +265,4 @@ When adding new features:
 3. Test both success and error cases
 4. Verify request structure (method, path, body)
 5. Validate response parsing
+- when finishing a task that changes code always run precommit to ensure we don't have linting errors

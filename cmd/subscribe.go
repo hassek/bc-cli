@@ -10,11 +10,11 @@ import (
 
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/cmd/order"
-	"github.com/hassek/bc-cli/cmd/prompts"
 	"github.com/hassek/bc-cli/config"
 	"github.com/hassek/bc-cli/templates"
+	"github.com/hassek/bc-cli/tui/models"
+	"github.com/hassek/bc-cli/tui/prompts"
 	"github.com/hassek/bc-cli/utils"
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -48,68 +48,19 @@ func runSubscriptions(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Create display items for the prompt
-	type promptItem struct {
-		Name        string
-		Description string
-		Price       string
-		Tier        string
-	}
-
-	items := make([]promptItem, len(available)+1)
-	for i, sub := range available {
-		item := promptItem{
-			Name:        sub.Name,
-			Description: sub.Description,
-			Price:       fmt.Sprintf("%s %s/%s", sub.Currency, sub.Price, sub.BillingPeriod),
-			Tier:        sub.Tier,
-		}
-
-		items[i] = item
-	}
-
-	// Add exit option
-	items[len(available)] = promptItem{
-		Name:        "← Exit",
-		Description: "Return to main menu",
-		Price:       "",
-	}
-
-	templates := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "▸ {{ .Name | cyan }}",
-		Inactive: "  {{ .Name }}",
-		Selected: "{{ .Name | green }}",
-		Details: `
---------- Subscription Details ----------
-{{ "Name:" | faint }}	{{ .Name }}
-{{ "Price:" | faint }}	{{ .Price }}
-{{ "Description:" | faint }}	{{ .Description }}`,
-	}
-
-	prompt := promptui.Select{
-		Label:     "Select a subscription tier to learn more",
-		Items:     items,
-		Templates: templates,
-		Size:      10,
-	}
-
-	idx, _, err := prompt.Run()
+	// Use new subscription picker with duck animation
+	selectedSub, err := models.PickSubscription(available)
 	if err != nil {
-		// User cancelled (Ctrl+C) or error
 		fmt.Println("\nExiting...")
 		return nil
 	}
 
-	// Check if user selected exit
-	if idx == len(available) {
+	// User cancelled or selected exit
+	if selectedSub == nil {
 		return nil
 	}
 
-	// Display detailed information about selected subscription
-	selectedSub := available[idx]
-
-	displaySubscriptionDetails(selectedSub, api.Subscription{}, cfg.IsAuthenticated())
+	displaySubscriptionDetails(*selectedSub, api.Subscription{}, cfg.IsAuthenticated())
 
 	// Ask if user wants to subscribe (if authenticated)
 	if cfg.IsAuthenticated() {
@@ -117,7 +68,7 @@ func runSubscriptions(cmd *cobra.Command, args []string) error {
 		confirmed, err := prompts.PromptConfirm(fmt.Sprintf("Would you like to subscribe to %s now", selectedSub.Name))
 		if err == nil && confirmed {
 			// User wants to subscribe - start order configuration flow
-			return createOrderAndSubscribe(cfg, client, selectedSub)
+			return createOrderAndSubscribe(cfg, client, *selectedSub)
 		}
 	} else if !cfg.IsAuthenticated() {
 		fmt.Println("\nPlease login first to subscribe:")

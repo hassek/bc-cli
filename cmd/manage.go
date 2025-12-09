@@ -1,16 +1,18 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/cmd/order"
-	"github.com/hassek/bc-cli/cmd/prompts"
 	"github.com/hassek/bc-cli/config"
 	"github.com/hassek/bc-cli/templates"
+	"github.com/hassek/bc-cli/tui/models"
+	"github.com/hassek/bc-cli/tui/prompts"
 	"github.com/hassek/bc-cli/utils"
-	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -88,22 +90,12 @@ func selectSubscriptionToManage(subscriptions []api.Subscription) (*api.Subscrip
 		return nil, nil
 	}
 
-	type subscriptionItem struct {
-		Subscription    api.Subscription
-		Display         string
-		Status          string
-		StartedAt       string
-		ExpiresAt       string
-		TotalQuantity   int
-		HasOrderDetails bool
-	}
-
-	items := make([]subscriptionItem, len(activeSubscriptions)+1)
+	items := make([]models.ManageSubscriptionItem, len(activeSubscriptions)+1)
 	for i, sub := range activeSubscriptions {
 		statusIcon := getStatusIcon(sub.Status)
 		display := fmt.Sprintf("%s %s (%s)", statusIcon, sub.Tier, sub.Status)
 
-		item := subscriptionItem{
+		item := models.ManageSubscriptionItem{
 			Subscription:    sub,
 			Display:         display,
 			Status:          sub.Status,
@@ -111,6 +103,7 @@ func selectSubscriptionToManage(subscriptions []api.Subscription) (*api.Subscrip
 			ExpiresAt:       "",
 			TotalQuantity:   0,
 			HasOrderDetails: false,
+			IsExit:          false,
 		}
 
 		if sub.StartedAt != nil {
@@ -127,40 +120,12 @@ func selectSubscriptionToManage(subscriptions []api.Subscription) (*api.Subscrip
 		items[i] = item
 	}
 
-	items[len(activeSubscriptions)] = subscriptionItem{
+	items[len(activeSubscriptions)] = models.ManageSubscriptionItem{
 		Display: "← Exit",
+		IsExit:  true,
 	}
 
-	selectTemplates := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "▸ {{ .Display | cyan }}",
-		Inactive: "  {{ .Display }}",
-		Selected: "{{ .Display | green }}",
-		Details: `
---------- Subscription Details ----------
-{{ if .Subscription.ID }}{{ "Tier:" | faint }}	{{ .Subscription.Tier }}
-{{ "Status:" | faint }}	{{ .Status }}
-{{ if .StartedAt }}{{ "Started:" | faint }}	{{ .StartedAt }}{{ end }}
-{{ if .HasOrderDetails }}{{ "Quantity:" | faint }}	{{ .TotalQuantity }}/month{{ end }}{{ end }}`,
-	}
-
-	prompt := promptui.Select{
-		Label:     "Select a subscription to manage",
-		Items:     items,
-		Templates: selectTemplates,
-		Size:      10,
-	}
-
-	idx, _, err := prompt.Run()
-	if err != nil {
-		return nil, nil
-	}
-
-	if idx == len(activeSubscriptions) {
-		return nil, nil
-	}
-
-	return &activeSubscriptions[idx], nil
+	return models.PickManageSubscription(items)
 }
 
 func showManagementMenu(cfg *config.Config, client *api.Client, subscription *api.Subscription) error {
@@ -178,25 +143,10 @@ func showManagementMenu(cfg *config.Config, client *api.Client, subscription *ap
 			return nil
 		}
 
-		selectTemplates := &promptui.SelectTemplates{
-			Label:    "{{ . }}",
-			Active:   "▸ {{ .Display | cyan }}",
-			Inactive: "  {{ .Display }}",
-			Selected: "{{ .Display | green }}",
-		}
-
-		prompt := promptui.Select{
-			Label:     "What would you like to do?",
-			Items:     actions,
-			Templates: selectTemplates,
-		}
-
-		idx, _, err := prompt.Run()
+		action, err := models.SelectAction(actions)
 		if err != nil {
 			return nil
 		}
-
-		action := actions[idx].Action
 
 		if action == "exit" {
 			return nil
@@ -205,11 +155,8 @@ func showManagementMenu(cfg *config.Config, client *api.Client, subscription *ap
 		updatedSub, err := executeAction(cfg, client, subscription, action)
 		if err != nil {
 			fmt.Printf("\nError: %v\n\n", err)
-			continuePrompt := promptui.Prompt{
-				Label:     "Press Enter to continue",
-				IsConfirm: false,
-			}
-			_, _ = continuePrompt.Run()
+			fmt.Print("Press Enter to continue...")
+			_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
 			continue
 		}
 
@@ -219,28 +166,23 @@ func showManagementMenu(cfg *config.Config, client *api.Client, subscription *ap
 	}
 }
 
-type actionItem struct {
-	Action  string
-	Display string
-}
-
-func buildActionMenu(status string) []actionItem {
-	var actions []actionItem
+func buildActionMenu(status string) []models.ActionItem {
+	var actions []models.ActionItem
 
 	switch status {
 	case "active":
-		actions = append(actions, actionItem{Action: "pause", Display: "⏸  Pause subscription"})
-		actions = append(actions, actionItem{Action: "update", Display: "✏  Update preferences"})
-		actions = append(actions, actionItem{Action: "cancel", Display: "✕ Cancel subscription"})
+		actions = append(actions, models.ActionItem{Action: "pause", Display: "⏸  Pause subscription"})
+		actions = append(actions, models.ActionItem{Action: "update", Display: "✏  Update preferences"})
+		actions = append(actions, models.ActionItem{Action: "cancel", Display: "✕ Cancel subscription"})
 	case "paused":
-		actions = append(actions, actionItem{Action: "resume", Display: "▶  Resume subscription"})
-		actions = append(actions, actionItem{Action: "update", Display: "✏  Update preferences"})
-		actions = append(actions, actionItem{Action: "cancel", Display: "✕ Cancel subscription"})
+		actions = append(actions, models.ActionItem{Action: "resume", Display: "▶  Resume subscription"})
+		actions = append(actions, models.ActionItem{Action: "update", Display: "✏  Update preferences"})
+		actions = append(actions, models.ActionItem{Action: "cancel", Display: "✕ Cancel subscription"})
 	case "cancelled":
 		return actions
 	}
 
-	actions = append(actions, actionItem{Action: "exit", Display: "← Exit"})
+	actions = append(actions, models.ActionItem{Action: "exit", Display: "← Exit"})
 	return actions
 }
 
@@ -434,36 +376,18 @@ func handleCancel(client *api.Client, subscription *api.Subscription) (*api.Subs
 	}
 
 	// Offer pause as an alternative
-	type cancelOption struct {
-		Action  string
-		Display string
-	}
-
-	options := []cancelOption{
+	options := []models.ActionItem{
 		{Action: "pause", Display: "⏸  Pause subscription instead (you can resume anytime)"},
 		{Action: "cancel", Display: "✕ Cancel permanently"},
 		{Action: "back", Display: "← Go back"},
 	}
 
-	selectTemplates := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "▸ {{ .Display | cyan }}",
-		Inactive: "  {{ .Display }}",
-		Selected: "{{ .Display | green }}",
-	}
-
-	prompt := promptui.Select{
-		Label:     "What would you like to do?",
-		Items:     options,
-		Templates: selectTemplates,
-	}
-
-	idx, _, err := prompt.Run()
-	if err != nil || options[idx].Action == "back" {
+	action, err := models.SelectAction(options)
+	if err != nil || action == "back" || action == "" {
 		return nil, nil
 	}
 
-	if options[idx].Action == "pause" {
+	if action == "pause" {
 		return handlePause(client, subscription)
 	}
 

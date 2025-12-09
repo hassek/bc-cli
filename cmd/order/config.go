@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/hassek/bc-cli/api"
-	"github.com/hassek/bc-cli/cmd/prompts"
 	"github.com/hassek/bc-cli/templates"
-	"github.com/manifoldco/promptui"
+	"github.com/hassek/bc-cli/tui/models"
+	"github.com/hassek/bc-cli/tui/prompts"
 )
 
 const (
@@ -155,33 +155,7 @@ func ConfigureLineItems(totalQuantity int) ([]api.OrderLineItem, error) {
 
 // SelectGrindType prompts the user to select a grind type
 func SelectGrindType() (string, error) {
-	items := []struct {
-		Value   string
-		Display string
-	}{
-		{"whole_bean", "Whole Bean (I'll grind it myself)"},
-		{"ground", "Ground (We'll grind it for you)"},
-	}
-
-	templates := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "  ▸ {{ .Display | cyan }}",
-		Inactive: "    {{ .Display }}",
-		Selected: "✓ {{ .Display }}",
-	}
-
-	prompt := promptui.Select{
-		Label:     "  Grind type",
-		Items:     items,
-		Templates: templates,
-	}
-
-	idx, _, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-
-	return items[idx].Value, nil
+	return models.SelectGrindType()
 }
 
 // SelectBrewingMethod prompts the user to select a brewing method
@@ -189,58 +163,9 @@ func SelectBrewingMethod(grindType string) (string, error) {
 	// Show helpful message first
 	fmt.Println("  What is your preferred brewing method?")
 	fmt.Println("  This helps us understand the best profiles to ensure the best tasting experience!")
+	fmt.Println()
 
-	items := []struct {
-		Value       string
-		Display     string
-		Description string
-	}{
-		{"espresso", "Espresso", "very fine grind"},
-		{"moka", "Moka Pot", "fine-medium grind"},
-		{"v60", "V60 Pour Over", "medium grind"},
-		{"french_press", "French Press", "coarse grind"},
-		{"pour_over", "Pour Over", "medium grind"},
-		{"drip", "Drip Coffee", "medium grind"},
-		{"cold_brew", "Cold Brew", "extra coarse grind"},
-	}
-
-	// Update labels based on grind type
-	var label string
-	var templates *promptui.SelectTemplates
-
-	if grindType == "whole_bean" {
-		label = "  Select your brewing method"
-		// For whole beans, show brewing methods without grind descriptions
-		templates = &promptui.SelectTemplates{
-			Label:    "{{ . }}",
-			Active:   "  ▸ {{ .Display | cyan }}",
-			Inactive: "    {{ .Display }}",
-			Selected: "✓ {{ .Display }}",
-		}
-	} else {
-		// For ground coffee, show grind descriptions
-		label = "  Select your brewing method"
-		templates = &promptui.SelectTemplates{
-			Label:    "{{ . }}",
-			Active:   "  ▸ {{ .Display | cyan }} ({{ .Description | faint }})",
-			Inactive: "    {{ .Display }} ({{ .Description | faint }})",
-			Selected: "✓ {{ .Display }}",
-		}
-	}
-
-	prompt := promptui.Select{
-		Label:     label,
-		Items:     items,
-		Templates: templates,
-		Size:      8,
-	}
-
-	idx, _, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-
-	return items[idx].Value, nil
+	return models.SelectBrewingMethod(grindType)
 }
 
 // BrewingMethodDisplay returns the display name for a brewing method

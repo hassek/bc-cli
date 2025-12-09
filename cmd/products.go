@@ -10,9 +10,9 @@ import (
 
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/cmd/order"
-	"github.com/hassek/bc-cli/cmd/prompts"
 	"github.com/hassek/bc-cli/config"
-	"github.com/manifoldco/promptui"
+	"github.com/hassek/bc-cli/tui/models"
+	"github.com/hassek/bc-cli/tui/prompts"
 	"github.com/spf13/cobra"
 )
 
@@ -46,68 +46,19 @@ func runProducts(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Create display items for the prompt
-	type promptItem struct {
-		Name        string
-		Description string
-		Price       string
-		Tier        string
-	}
-
-	items := make([]promptItem, len(available)+1)
-	for i, product := range available {
-		item := promptItem{
-			Name:        product.Name,
-			Description: product.Description,
-			Price:       fmt.Sprintf("%s %s", product.Currency, product.Price),
-			Tier:        product.Tier,
-		}
-
-		items[i] = item
-	}
-
-	// Add exit option
-	items[len(available)] = promptItem{
-		Name:        "← Exit",
-		Description: "Return to main menu",
-		Price:       "",
-	}
-
-	templates := &promptui.SelectTemplates{
-		Label:    "{{ . }}",
-		Active:   "▸ {{ .Name | cyan }}",
-		Inactive: "  {{ .Name }}",
-		Selected: "{{ .Name | green }}",
-		Details: `
---------- Product Details ----------
-{{ "Name:" | faint }}	{{ .Name }}
-{{ "Price:" | faint }}	{{ .Price }}
-{{ "Description:" | faint }}	{{ .Description }}`,
-	}
-
-	prompt := promptui.Select{
-		Label:     "Select a product to learn more",
-		Items:     items,
-		Templates: templates,
-		Size:      10,
-	}
-
-	idx, _, err := prompt.Run()
+	// Use new product picker with duck animation
+	selectedProduct, err := models.PickProduct(available)
 	if err != nil {
-		// User cancelled (Ctrl+C) or error
 		fmt.Println("\nExiting...")
 		return nil
 	}
 
-	// Check if user selected exit
-	if idx == len(available) {
+	// User cancelled or selected exit
+	if selectedProduct == nil {
 		return nil
 	}
 
-	// Display detailed information about selected product
-	selectedProduct := available[idx]
-
-	displayProductDetails(selectedProduct)
+	displayProductDetails(*selectedProduct)
 
 	// Ask if user wants to purchase (if authenticated)
 	if cfg.IsAuthenticated() {
@@ -115,7 +66,7 @@ func runProducts(cmd *cobra.Command, args []string) error {
 		confirmed, err := prompts.PromptConfirm(fmt.Sprintf("Would you like to purchase %s now", selectedProduct.Name))
 		if err == nil && confirmed {
 			// User wants to purchase - start order configuration flow
-			return createProductOrder(cfg, client, selectedProduct)
+			return createProductOrder(cfg, client, *selectedProduct)
 		}
 	} else if !cfg.IsAuthenticated() {
 		fmt.Println("\nPlease login first to purchase:")
