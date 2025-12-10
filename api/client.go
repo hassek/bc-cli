@@ -11,6 +11,14 @@ import (
 	"github.com/hassek/bc-cli/config"
 )
 
+// Version can be set via build flags: -ldflags "-X github.com/hassek/bc-cli/api.Version=x.y.z"
+var Version = "dev"
+
+// UserAgent returns the User-Agent string for HTTP requests
+func UserAgent() string {
+	return fmt.Sprintf("bc-cli/%s", Version)
+}
+
 type Client struct {
 	BaseURL    string
 	HTTPClient *http.Client
@@ -59,6 +67,7 @@ func (c *Client) doRequest(method, path string, body any, requireAuth bool) (*ht
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("User-Agent", UserAgent())
 
 	if requireAuth && c.Config.AccessToken != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Config.AccessToken))
@@ -98,6 +107,7 @@ func (c *Client) doRequest(method, path string, body any, requireAuth bool) (*ht
 
 		retryReq.Header.Set("Content-Type", "application/json")
 		retryReq.Header.Set("Accept", "application/json")
+		retryReq.Header.Set("User-Agent", UserAgent())
 		retryReq.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.Config.AccessToken))
 
 		retryResp, err := c.HTTPClient.Do(retryReq)
