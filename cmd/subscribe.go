@@ -98,7 +98,8 @@ func displaySubscriptionDetails(sub api.AvailableSubscription, activeSub api.Sub
 		}
 	}
 
-	if err := templates.RenderToStdout(templates.SubscriptionDetailsTemplate, struct {
+	// Use viewport for scrollable display
+	if err := templates.RenderInViewport(sub.Name, templates.SubscriptionDetailsTemplate, struct {
 		Name          string
 		Currency      string
 		Price         string

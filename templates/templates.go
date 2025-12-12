@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/hassek/bc-cli/tui/components"
 )
 
 // Common template functions
@@ -45,4 +47,22 @@ func Render(w io.Writer, tmpl string, data any) error {
 // RenderToStdout renders a template to stdout
 func RenderToStdout(tmpl string, data any) error {
 	return Render(os.Stdout, tmpl, data)
+}
+
+// RenderToString renders a template to a string
+func RenderToString(tmpl string, data any) (string, error) {
+	var buf strings.Builder
+	if err := Render(&buf, tmpl, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+// RenderInViewport renders a template in a scrollable viewport
+func RenderInViewport(title, tmpl string, data any) error {
+	content, err := RenderToString(tmpl, data)
+	if err != nil {
+		return err
+	}
+	return components.ShowTextViewer(title, content)
 }

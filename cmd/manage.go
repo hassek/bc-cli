@@ -152,7 +152,7 @@ func showManagementMenu(cfg *config.Config, client *api.Client, subscription *ap
 			return nil
 		}
 
-		updatedSub, err := executeAction(cfg, client, subscription, action)
+		_, err = executeAction(cfg, client, subscription, action)
 		if err != nil {
 			fmt.Printf("\nError: %v\n\n", err)
 			fmt.Print("Press Enter to continue...")
@@ -160,9 +160,8 @@ func showManagementMenu(cfg *config.Config, client *api.Client, subscription *ap
 			continue
 		}
 
-		if updatedSub != nil {
-			subscription = updatedSub
-		}
+		// Action completed successfully - exit the CLI
+		return nil
 	}
 }
 

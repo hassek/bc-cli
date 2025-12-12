@@ -11,6 +11,7 @@ import (
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/cmd/order"
 	"github.com/hassek/bc-cli/config"
+	"github.com/hassek/bc-cli/tui/components"
 	"github.com/hassek/bc-cli/tui/models"
 	"github.com/hassek/bc-cli/tui/prompts"
 	"github.com/spf13/cobra"
@@ -77,22 +78,17 @@ func runProducts(cmd *cobra.Command, args []string) error {
 }
 
 func displayProductDetails(product api.AvailableSubscription) {
-	fmt.Println("\n" + strings.Repeat("═", 60))
-	fmt.Printf("\n  %s\n\n", product.Name)
-	fmt.Println(strings.Repeat("─", 60))
+	content := "\n" + strings.Repeat("═", 60) + "\n"
+	content += fmt.Sprintf("\n  %s\n\n", product.Name)
+	content += strings.Repeat("─", 60) + "\n"
+	content += fmt.Sprintf("\n  Price: %s %s\n", product.Currency, product.Price)
+	content += fmt.Sprintf("  %s\n\n", product.Description)
+	content += strings.Repeat("═", 60) + "\n"
 
-	fmt.Printf("\n  Price: %s %s\n", product.Currency, product.Price)
-	fmt.Printf("  %s\n\n", product.Description)
-
-	// if len(product.Features) > 0 {
-	// 	fmt.Println("  Features:")
-	// 	for _, feature := range product.Features {
-	// 		fmt.Printf("    • %s\n", feature)
-	// 	}
-	// 	fmt.Println()
-	// }
-
-	fmt.Println(strings.Repeat("═", 60) + "\n")
+	// Use viewport for scrollable display
+	if err := components.ShowTextViewer(product.Name, content); err != nil {
+		fmt.Printf("Error displaying product details: %v\n", err)
+	}
 }
 
 func createProductOrder(cfg *config.Config, client *api.Client, product api.AvailableSubscription) error {
