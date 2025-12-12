@@ -267,6 +267,36 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		return nil, err
 	}
 
+	// Show current configuration
+	currentQuantity := subscription.GetTotalQuantity()
+	if currentQuantity > 0 && len(subscription.DefaultPreferences) > 0 {
+		formattedItems := make([]string, len(subscription.DefaultPreferences))
+		for i, pref := range subscription.DefaultPreferences {
+			qty := pref.GetQuantity()
+			if pref.GrindType == "whole_bean" {
+				formattedItems[i] = fmt.Sprintf("%d → Whole beans for %s",
+					qty,
+					order.BrewingMethodDisplay(pref.BrewingMethod))
+			} else {
+				grindDesc := order.GetGrindDescription(pref.BrewingMethod)
+				formattedItems[i] = fmt.Sprintf("%d → Ground for %s (%s)",
+					qty,
+					order.BrewingMethodDisplay(pref.BrewingMethod),
+					grindDesc)
+			}
+		}
+
+		if err := templates.RenderToStdout(templates.CurrentSubscriptionConfigTemplate, struct {
+			TotalQuantity int
+			LineItems     []string
+		}{
+			TotalQuantity: currentQuantity,
+			LineItems:     formattedItems,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	availableSubs, err := client.GetAvailableSubscriptions()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get available subscriptions: %w", err)
@@ -284,8 +314,11 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		return nil, fmt.Errorf("could not find tier information")
 	}
 
-	// Use default preference quantity or the minimum quantity, whichever is larger
-	defaultQty := max(order.DefaultPreferenceQuantity, cfg.MinQuantity)
+	// Use current quantity as default, or fall back to configured default
+	defaultQty := currentQuantity
+	if defaultQty == 0 {
+		defaultQty = max(order.DefaultPreferenceQuantity, cfg.MinQuantity)
+	}
 
 	totalQuantity, err := prompts.PromptQuantityInt("New total quantity per month", cfg.MinQuantity, cfg.MaxQuantity, defaultQty)
 	if err != nil {
@@ -297,7 +330,8 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 
 	fmt.Printf("\n✓ New quantity: %d per month\n\n", totalQuantity)
 
-	wantsSplit, err := prompts.PromptConfirm("Would you like different grind methods?")
+	// Ask if they want to update preferences as well
+	wantsUpdatePreferences, err := prompts.PromptConfirm("Would you like to update your coffee preferences as well?")
 	if err != nil {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
 			fmt.Println("Update cancelled.")
@@ -307,15 +341,65 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 
 	var lineItems []api.OrderLineItem
 
-	if !wantsSplit {
-		lineItems, err = order.ConfigureUniformOrder(totalQuantity)
-		if err != nil {
-			return nil, err
+	if !wantsUpdatePreferences {
+		// Quantity-only update - keep existing preferences proportionally
+		// or use a simple default if no preferences exist
+		if len(subscription.DefaultPreferences) > 0 {
+			// Keep existing preferences but adjust quantities proportionally
+			totalCurrentQty := float64(currentQuantity)
+			for _, pref := range subscription.DefaultPreferences {
+				currentQty := pref.GetQuantity()
+				// Calculate proportional quantity
+				proportion := float64(currentQty) / totalCurrentQty
+				newQty := int(proportion*float64(totalQuantity) + 0.5) // Round to nearest
+				if newQty < 1 {
+					newQty = 1 // Ensure at least 1
+				}
+				lineItems = append(lineItems, api.OrderLineItem{
+					Quantity:      newQty,
+					GrindType:     pref.GrindType,
+					BrewingMethod: pref.BrewingMethod,
+				})
+			}
+			// Adjust for rounding errors
+			sumQty := 0
+			for _, item := range lineItems {
+				sumQty += item.Quantity
+			}
+			if sumQty != totalQuantity {
+				lineItems[0].Quantity += totalQuantity - sumQty
+			}
+		} else {
+			// No existing preferences, create a default uniform order
+			lineItems = []api.OrderLineItem{
+				{
+					Quantity:      totalQuantity,
+					GrindType:     "whole_bean",
+					BrewingMethod: "espresso",
+				},
+			}
 		}
 	} else {
-		lineItems, err = order.ConfigureLineItems(totalQuantity)
+		// Full preference update
+		fmt.Println()
+		wantsSplit, err := prompts.PromptConfirm("Would you like different grind methods?")
 		if err != nil {
-			return nil, err
+			if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
+				fmt.Println("Update cancelled.")
+			}
+			return nil, nil
+		}
+
+		if !wantsSplit {
+			lineItems, err = order.ConfigureUniformOrder(totalQuantity)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			lineItems, err = order.ConfigureLineItems(totalQuantity)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

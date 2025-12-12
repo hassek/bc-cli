@@ -94,10 +94,10 @@ Opening checkout...
 `
 
 const SuccessMessageTemplate = `
-🎉 Congratulations! Your subscription is now active!
+Congratulations! Your subscription is now active!
 
-📦 Your first shipment of {{.TotalQuantity}} of fresh {{.TierName}} coffee
-   will be shipped within the next 7 days.
+Your first shipment of {{.TotalQuantity}} of fresh {{.TierName}} coffee
+   will be shipped within the next 7 days. You should recieve a confirmation email soon!
 
 ☕ Get ready for an amazing coffee experience!
 `
@@ -200,6 +200,17 @@ const SubscriptionResumedTemplate = `
 const UpdateSubscriptionHeaderTemplate = `
 {{repeat "─" 60}}
 Update Subscription Preferences
+{{repeat "─" 60}}
+
+`
+
+const CurrentSubscriptionConfigTemplate = `
+Your Current Configuration:
+  Total: {{.TotalQuantity}} per month
+
+How your coffee is currently prepared:
+{{range $i, $item := .LineItems}}  {{add $i 1}}. {{$item}}
+{{end}}
 {{repeat "─" 60}}
 
 `
