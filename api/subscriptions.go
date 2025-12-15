@@ -82,6 +82,7 @@ type AvailablePlan struct {
 	Description   string   `json:"description"`
 	Features      []string `json:"features"`
 	IsSubscription bool    `json:"is_subscription"`
+	IsActive       bool    `json:"is_active"`
 }
 
 // AvailableSubscription is an alias for backwards compatibility
@@ -140,7 +141,15 @@ func (c *Client) GetAvailableSubscriptions() ([]AvailablePlan, error) {
 		return nil, err
 	}
 
-	return result.Data, nil
+	// Filter to only include active subscriptions
+	var activeSubscriptions []AvailablePlan
+	for _, subscription := range result.Data {
+		if subscription.IsActive {
+			activeSubscriptions = append(activeSubscriptions, subscription)
+		}
+	}
+
+	return activeSubscriptions, nil
 }
 
 // GetAvailableProducts retrieves all available one-time purchase products
@@ -155,7 +164,15 @@ func (c *Client) GetAvailableProducts() ([]AvailablePlan, error) {
 		return nil, err
 	}
 
-	return result.Data, nil
+	// Filter to only include active products
+	var activeProducts []AvailablePlan
+	for _, product := range result.Data {
+		if product.IsActive {
+			activeProducts = append(activeProducts, product)
+		}
+	}
+
+	return activeProducts, nil
 }
 
 // GetSubscriptionPricing retrieves pricing information for a specific tier
