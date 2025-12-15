@@ -56,7 +56,7 @@ func formatAboutContent() string {
 	// b.WriteString("\n")
 
 	// Introduction
-	intro := "\nAt Butler Coffee, we keep things simple: we only share what we genuinely love, and we have fun doing it."
+	intro := "\nAt Butler Coffee we keep things simple: we only share what we genuinely love, and we have fun doing it."
 	b.WriteString(paragraphStyle.Render(intro))
 	b.WriteString("\n")
 
@@ -64,9 +64,9 @@ func formatAboutContent() string {
 	b.WriteString(sectionStyle.Render("Our First Principle"))
 	b.WriteString("\n")
 
-	principle1 := principleStyle.Render("Non-negotiable") + " — nothing goes on our stock unless we'd " +
+	principle1 := principleStyle.Render("We only offer what we like") + " — nothing goes on our stock unless we'd " +
 		"happily drink it ourselves. Every coffee, machine, and product we offer " +
-		"has been tested, tasted, and enjoyed by us first. If it doesn't meet " +
+		"has been tested, tasted and enjoyed by us first. If it doesn't meet " +
 		"our own standards, it never makes it to yours."
 	b.WriteString(paragraphStyle.Render(principle1))
 	b.WriteString("\n")
@@ -76,9 +76,9 @@ func formatAboutContent() string {
 	b.WriteString("\n")
 
 	principle2 := "Just as important: " + principleStyle.Render("we should enjoy the ride") + ".\nThat means " +
-		"we sometimes try ideas that make absolutely no sense on paper, simply " +
+		"we sometimes try ideas that doesn't have to make much sense on paper, simply " +
 		"because they make us smile. Coffee is meant to be enjoyed, and we want " +
-		"that spirit to flow through everything we do."
+		"that spirit to show through everything we do."
 	b.WriteString(paragraphStyle.Render(principle2))
 	b.WriteString("\n")
 
@@ -87,9 +87,9 @@ func formatAboutContent() string {
 	b.WriteString("\n")
 
 	whatWeDo := "Today, we focus on bringing high-quality specialty coffee to both homes " +
-		"and workplaces through curated subscriptions and office coffee setups " +
-		"offering coffee beans from all around the world. Whether it's a single " +
-		"bag or a full machine, our goal is to deliver products that make your " +
+		"and workplaces through curated subscriptions and office setups " +
+		"offering beans from all around the world. Whether it's a single " +
+		"bag or a full machine solution, our goal is to deliver products that make your " +
 		"daily coffee something worth looking forward to."
 	b.WriteString(paragraphStyle.Render(whatWeDo))
 	b.WriteString("\n")
@@ -107,8 +107,8 @@ func formatAboutContent() string {
 		Width(70)
 
 	footer := "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-		"                    Made with ☕ and love\n" +
-		"                    butler.coffee"
+		"                Made with ☕ and love\n" +
+		"                butler.coffee"
 	b.WriteString(footerStyle.Render(footer))
 
 	return b.String()
