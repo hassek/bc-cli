@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/tui/components"
+	"github.com/hassek/bc-cli/utils"
 )
 
 // SubscriptionItem wraps an api.AvailableSubscription for use with SelectComponent
@@ -27,12 +28,17 @@ func (s SubscriptionItem) Details() string {
 	}
 	details := fmt.Sprintf("Name:    %s\n", s.Subscription.Name)
 	details += fmt.Sprintf("Price:   %s %s/%s\n", s.Subscription.Currency, s.Subscription.Price, s.Subscription.BillingPeriod)
-	details += fmt.Sprintf("Summary: %s\n", s.Subscription.Summary)
+
+	// Wrap summary to fit in details panel (60 chars wide, minus label)
+	wrappedSummary := utils.WrapTextWithIndent(s.Subscription.Summary, 55, "         ")
+	details += fmt.Sprintf("Summary: %s\n", wrappedSummary)
 
 	if len(s.Subscription.Features) > 0 {
 		details += "\nFeatures:\n"
 		for _, feature := range s.Subscription.Features {
-			details += fmt.Sprintf("  • %s\n", feature)
+			// Wrap each feature to fit (60 chars wide, minus bullet indent)
+			wrappedFeature := utils.WrapTextWithIndent(feature, 56, "    ")
+			details += fmt.Sprintf("  • %s\n", wrappedFeature)
 		}
 	}
 

@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/tui/components"
+	"github.com/hassek/bc-cli/utils"
 )
 
 // ProductItem wraps an api.AvailableSubscription for use with SelectComponent
@@ -25,9 +26,25 @@ func (p ProductItem) Details() string {
 	if p.IsExit {
 		return "Return to main menu"
 	}
+
+	// Get terminal width and calculate available space for details
+	termWidth := utils.GetTerminalWidth()
+	detailsWidth := termWidth - 10 // Account for margins and duck
+	if detailsWidth > 100 {
+		detailsWidth = 100 // Cap at 100 for readability
+	}
+
 	details := fmt.Sprintf("Name:    %s\n", p.Product.Name)
 	details += fmt.Sprintf("Price:   %s %s\n", p.Product.Currency, p.Product.Price)
-	details += fmt.Sprintf("Summary: %s", p.Product.Summary)
+
+	// Wrap summary to fit available space
+	indentWidth := 9 // "Summary: " is 9 chars
+	wrapWidth := detailsWidth - indentWidth
+	if wrapWidth < 20 {
+		wrapWidth = 20 // Minimum width
+	}
+	wrappedSummary := utils.WrapTextWithIndent(p.Product.Summary, wrapWidth, "         ")
+	details += fmt.Sprintf("Summary: %s", wrappedSummary)
 	return details
 }
 

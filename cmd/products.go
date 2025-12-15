@@ -14,6 +14,7 @@ import (
 	"github.com/hassek/bc-cli/tui/components"
 	"github.com/hassek/bc-cli/tui/models"
 	"github.com/hassek/bc-cli/tui/prompts"
+	"github.com/hassek/bc-cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -78,12 +79,22 @@ func runProducts(cmd *cobra.Command, args []string) error {
 }
 
 func displayProductDetails(product api.AvailableSubscription) {
-	content := "\n" + strings.Repeat("═", 60) + "\n"
+	// Get terminal width for wrapping
+	termWidth := utils.GetTerminalWidth()
+	maxWidth := 100
+	if termWidth < maxWidth {
+		maxWidth = termWidth - 4 // Leave some margin
+	}
+
+	content := "\n" + strings.Repeat("═", maxWidth) + "\n"
 	content += fmt.Sprintf("\n  %s\n\n", product.Name)
-	content += strings.Repeat("─", 60) + "\n"
-	content += fmt.Sprintf("\n  Price: %s %s\n", product.Currency, product.Price)
-	content += fmt.Sprintf("  %s\n\n", product.Description)
-	content += strings.Repeat("═", 60) + "\n"
+	content += strings.Repeat("─", maxWidth) + "\n"
+	content += fmt.Sprintf("\n  Price: %s %s\n\n", product.Currency, product.Price)
+
+	// Wrap the description to fit terminal width
+	wrappedDesc := utils.WrapTextWithIndent(product.Description, maxWidth-2, "  ")
+	content += fmt.Sprintf("  %s\n\n", wrappedDesc)
+	content += strings.Repeat("═", maxWidth) + "\n"
 
 	// Use viewport for scrollable display
 	if err := components.ShowTextViewer(product.Name, content); err != nil {
@@ -101,7 +112,7 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	fmt.Println("\n" + strings.Repeat("─", 60) + "\n")
 
 	// Step 1: Ask for quantity (number of items, not kg)
-	quantity, err := prompts.PromptQuantityInt("How many would you like to purchase?", 1, 100, 1)
+	quantity, err := prompts.PromptQuantityInt("How many would you like to purchase?", 1, 10, 1)
 	if err != nil {
 		return err
 	}

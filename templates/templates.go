@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/hassek/bc-cli/tui/components"
+	"github.com/hassek/bc-cli/utils"
 )
 
 // Common template functions
@@ -32,6 +33,18 @@ var funcMap = template.FuncMap{
 		filled := int(percentage * float64(width))
 		bar := strings.Repeat("█", filled) + strings.Repeat("░", width-filled)
 		return bar
+	},
+	"wrap": func(text string, width int) string {
+		return utils.WrapText(text, width)
+	},
+	"wrapAuto": func(text string) string {
+		// Auto-detect terminal width and use 60 as max for better readability
+		termWidth := utils.GetTerminalWidth()
+		maxWidth := 60
+		if termWidth < maxWidth {
+			maxWidth = termWidth - 4 // Leave some margin
+		}
+		return utils.WrapText(text, maxWidth)
 	},
 }
 

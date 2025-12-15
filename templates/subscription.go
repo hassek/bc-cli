@@ -20,7 +20,10 @@ const SubscriptionDetailsTemplate = `
 {{repeat "=" 60}}
 
 Price: {{.Currency}} {{.Price}}/{{.BillingPeriod}}
-Description: {{.Description}}
+
+Description:
+{{wrapAuto .Description}}
+
 {{if .ActiveSub.ID}}
 Status: {{.ActiveSub.Status | upper}}{{if eq .ActiveSub.Status "active"}} ✓{{end}}
 {{if .ActiveSub.StartedAt}}Started: {{.ActiveSub.StartedAt}}
