@@ -123,17 +123,27 @@ func createOrderAndSubscribe(cfg *config.Config, client *api.Client, tier api.Av
 		return fmt.Errorf("you must be logged in to subscribe. Please run 'bc-cli login' first")
 	}
 
+	// Use min/max quantity from backend, fallback to config defaults if not set
+	minQty := tier.MinQuantity
+	maxQty := tier.MaxQuantity
+	if minQty == 0 {
+		minQty = cfg.MinQuantity
+	}
+	if maxQty == 0 {
+		maxQty = cfg.MaxQuantity
+	}
+
 	if err := templates.RenderToStdout(templates.OrderConfigIntroTemplate, struct {
 		MinQuantity int
 		MaxQuantity int
 	}{
-		MinQuantity: cfg.MinQuantity,
-		MaxQuantity: cfg.MaxQuantity,
+		MinQuantity: minQty,
+		MaxQuantity: maxQty,
 	}); err != nil {
 		return fmt.Errorf("failed to render template: %w", err)
 	}
 
-	totalQuantity, err := prompts.PromptQuantityInt("Total quantity per month", cfg.MinQuantity, cfg.MaxQuantity, cfg.MinQuantity)
+	totalQuantity, err := prompts.PromptQuantityInt("Total quantity per month", minQty, maxQty, minQty)
 	if err != nil {
 		return err
 	}

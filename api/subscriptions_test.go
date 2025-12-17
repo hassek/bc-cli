@@ -339,3 +339,158 @@ func TestSubscriptionGetTotalQuantity(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAvailableSubscriptions(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/core/v1/subscriptions/available" {
+			t.Errorf("Expected path '/api/core/v1/subscriptions/available', got '%s'", r.URL.Path)
+		}
+		if r.Method != "GET" {
+			t.Errorf("Expected GET method, got %s", r.Method)
+		}
+
+		// Verify query parameter
+		if r.URL.Query().Get("is_subscription") != "true" {
+			t.Errorf("Expected query parameter is_subscription=true")
+		}
+
+		response := AvailablePlansResponse{
+			Meta: struct {
+				Code    int    `json:"code"`
+				Message string `json:"message"`
+			}{Code: 200, Message: "Success"},
+			Data: []AvailablePlan{
+				{
+					ID:             "plan-1",
+					Tier:           "butler",
+					Name:           "Butler Coffee",
+					Price:          "49.00",
+					Currency:       "EUR",
+					BillingPeriod:  "monthly",
+					IsActive:       true,
+					IsSubscription: true,
+					MinQuantity:    1,
+					MaxQuantity:    10,
+				},
+				{
+					ID:             "plan-2",
+					Tier:           "collection",
+					Name:           "Collection Coffee",
+					Price:          "79.00",
+					Currency:       "EUR",
+					BillingPeriod:  "monthly",
+					IsActive:       true,
+					IsSubscription: true,
+					MinQuantity:    1,
+					MaxQuantity:    100,
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	cfg := &config.Config{
+		APIURL: server.URL,
+	}
+	client := NewClient(cfg)
+
+	plans, err := client.GetAvailableSubscriptions()
+	if err != nil {
+		t.Fatalf("GetAvailableSubscriptions failed: %v", err)
+	}
+
+	if len(plans) != 2 {
+		t.Errorf("Expected 2 plans, got %d", len(plans))
+	}
+
+	// Check first plan
+	if plans[0].Tier != "butler" {
+		t.Errorf("Expected tier 'butler', got '%s'", plans[0].Tier)
+	}
+	if plans[0].MinQuantity != 1 {
+		t.Errorf("Expected MinQuantity 1, got %d", plans[0].MinQuantity)
+	}
+	if plans[0].MaxQuantity != 10 {
+		t.Errorf("Expected MaxQuantity 10, got %d", plans[0].MaxQuantity)
+	}
+
+	// Check second plan
+	if plans[1].Tier != "collection" {
+		t.Errorf("Expected tier 'collection', got '%s'", plans[1].Tier)
+	}
+	if plans[1].MinQuantity != 1 {
+		t.Errorf("Expected MinQuantity 1, got %d", plans[1].MinQuantity)
+	}
+	if plans[1].MaxQuantity != 100 {
+		t.Errorf("Expected MaxQuantity 100, got %d", plans[1].MaxQuantity)
+	}
+}
+
+func TestGetAvailableProducts(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/core/v1/subscriptions/available" {
+			t.Errorf("Expected path '/api/core/v1/subscriptions/available', got '%s'", r.URL.Path)
+		}
+		if r.Method != "GET" {
+			t.Errorf("Expected GET method, got %s", r.Method)
+		}
+
+		// Verify query parameter
+		if r.URL.Query().Get("is_subscription") != "false" {
+			t.Errorf("Expected query parameter is_subscription=false")
+		}
+
+		response := AvailablePlansResponse{
+			Meta: struct {
+				Code    int    `json:"code"`
+				Message string `json:"message"`
+			}{Code: 200, Message: "Success"},
+			Data: []AvailablePlan{
+				{
+					ID:             "product-1",
+					Name:           "Christmas Bundle",
+					Price:          "40.00",
+					Currency:       "EUR",
+					BillingPeriod:  "one-time",
+					IsActive:       true,
+					IsSubscription: false,
+					MinQuantity:    1,
+					MaxQuantity:    100,
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	cfg := &config.Config{
+		APIURL: server.URL,
+	}
+	client := NewClient(cfg)
+
+	products, err := client.GetAvailableProducts()
+	if err != nil {
+		t.Fatalf("GetAvailableProducts failed: %v", err)
+	}
+
+	if len(products) != 1 {
+		t.Errorf("Expected 1 product, got %d", len(products))
+	}
+
+	// Check product
+	if products[0].Name != "Christmas Bundle" {
+		t.Errorf("Expected name 'Christmas Bundle', got '%s'", products[0].Name)
+	}
+	if products[0].MinQuantity != 1 {
+		t.Errorf("Expected MinQuantity 1, got %d", products[0].MinQuantity)
+	}
+	if products[0].MaxQuantity != 100 {
+		t.Errorf("Expected MaxQuantity 100, got %d", products[0].MaxQuantity)
+	}
+	if products[0].IsSubscription {
+		t.Error("Expected IsSubscription to be false")
+	}
+}

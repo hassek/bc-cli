@@ -83,6 +83,8 @@ type AvailablePlan struct {
 	Features      []string `json:"features"`
 	IsSubscription bool    `json:"is_subscription"`
 	IsActive       bool    `json:"is_active"`
+	MinQuantity    int     `json:"min_quantity"`
+	MaxQuantity    int     `json:"max_quantity"`
 }
 
 // AvailableSubscription is an alias for backwards compatibility

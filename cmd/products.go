@@ -111,8 +111,18 @@ func createProductOrder(cfg *config.Config, client *api.Client, product api.Avai
 	fmt.Println("\n  Configure Your Order")
 	fmt.Println("\n" + strings.Repeat("─", 60) + "\n")
 
+	// Use min/max quantity from backend, fallback to defaults if not set
+	minQty := product.MinQuantity
+	maxQty := product.MaxQuantity
+	if minQty == 0 {
+		minQty = 1
+	}
+	if maxQty == 0 {
+		maxQty = 10
+	}
+
 	// Step 1: Ask for quantity (number of items, not kg)
-	quantity, err := prompts.PromptQuantityInt("How many would you like to purchase?", 1, 10, 1)
+	quantity, err := prompts.PromptQuantityInt("How many would you like to purchase?", minQty, maxQty, minQty)
 	if err != nil {
 		return err
 	}

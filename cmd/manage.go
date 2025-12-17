@@ -313,13 +313,23 @@ func handleUpdate(cfg *config.Config, client *api.Client, subscription *api.Subs
 		return nil, fmt.Errorf("could not find tier information")
 	}
 
+	// Use min/max quantity from backend, fallback to config defaults if not set
+	minQty := currentTier.MinQuantity
+	maxQty := currentTier.MaxQuantity
+	if minQty == 0 {
+		minQty = cfg.MinQuantity
+	}
+	if maxQty == 0 {
+		maxQty = cfg.MaxQuantity
+	}
+
 	// Use current quantity as default, or fall back to configured default
 	defaultQty := currentQuantity
 	if defaultQty == 0 {
-		defaultQty = max(order.DefaultPreferenceQuantity, cfg.MinQuantity)
+		defaultQty = max(order.DefaultPreferenceQuantity, minQty)
 	}
 
-	totalQuantity, err := prompts.PromptQuantityInt("New total quantity per month", cfg.MinQuantity, cfg.MaxQuantity, defaultQty)
+	totalQuantity, err := prompts.PromptQuantityInt("New total quantity per month", minQty, maxQty, defaultQty)
 	if err != nil {
 		if err := templates.RenderToStdout(templates.ActionCancelledTemplate, struct{ Action string }{Action: "Update"}); err != nil {
 			fmt.Println("Update cancelled.")

@@ -76,7 +76,7 @@ func formatAboutContent() string {
 	b.WriteString("\n")
 
 	principle2 := "Just as important: " + principleStyle.Render("we should enjoy the ride") + ".\nThat means " +
-		"we sometimes try ideas that doesn't have to make much sense on paper, simply " +
+		"we sometimes try ideas that don't make much sense on paper, simply " +
 		"because they make us smile. Coffee is meant to be enjoyed, and we want " +
 		"that spirit to show through everything we do."
 	b.WriteString(paragraphStyle.Render(principle2))
