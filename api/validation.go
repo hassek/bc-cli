@@ -54,12 +54,10 @@ func validateSubscription(sub *Subscription) error {
 		return fmt.Errorf("invalid payment link: %w", err)
 	}
 
-	// Validate quantity if present
-	if sub.DefaultQuantity != "" {
-		qty := sub.GetTotalQuantity()
-		if qty < 0 || qty > 1000 {
-			return fmt.Errorf("invalid quantity: %d (must be between 0 and 1000)", qty)
-		}
+	// Validate quantity
+	qty := sub.GetTotalQuantity()
+	if qty < 0 || qty > 1000 {
+		return fmt.Errorf("invalid quantity: %d (must be between 0 and 1000)", qty)
 	}
 
 	return nil
@@ -84,7 +82,7 @@ func validateOrder(order *Order) error {
 	// Validate quantity
 	qty := order.GetTotalQuantity()
 	if qty < 0 || qty > 1000 {
-		return fmt.Errorf("invalid order quantity: %f (must be between 0 and 1000)", qty)
+		return fmt.Errorf("invalid order quantity: %d (must be between 0 and 1000)", qty)
 	}
 
 	// Validate line items count

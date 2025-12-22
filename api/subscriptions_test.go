@@ -28,7 +28,7 @@ func TestListSubscriptions(t *testing.T) {
 					ID:              "sub-123",
 					Tier:            "butler",
 					Status:          "active",
-					DefaultQuantity: "5",
+					DefaultQuantity: 5,
 				},
 			},
 		}
@@ -83,17 +83,17 @@ func TestGetSubscription(t *testing.T) {
 				ID:              "sub-123",
 				Tier:            "butler",
 				Status:          "active",
-				DefaultQuantity: "5",
+				DefaultQuantity: 5,
 				DefaultPreferences: []SubscriptionPreference{
 					{
 						ID:            "pref-1",
-						Quantity:      "3",
+						Quantity:      3,
 						GrindType:     "whole_bean",
 						BrewingMethod: "espresso",
 					},
 					{
 						ID:            "pref-2",
-						Quantity:      "2",
+						Quantity:      2,
 						GrindType:     "ground",
 						BrewingMethod: "v60",
 					},
@@ -282,7 +282,7 @@ func TestUpdateSubscription(t *testing.T) {
 			Data: Subscription{
 				ID:              "sub-123",
 				Status:          "active",
-				DefaultQuantity: "10",
+				DefaultQuantity: 10,
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -320,13 +320,12 @@ func TestUpdateSubscription(t *testing.T) {
 func TestSubscriptionGetTotalQuantity(t *testing.T) {
 	tests := []struct {
 		name     string
-		quantity string
+		quantity int
 		want     int
 	}{
-		{"whole number", "5", 5},
-		{"decimal rounds up", "5.6", 6},
-		{"decimal rounds down", "5.4", 5},
-		{"empty string", "", 0},
+		{"whole number", 5, 5},
+		{"zero", 0, 0},
+		{"large number", 100, 100},
 	}
 
 	for _, tt := range tests {

@@ -25,21 +25,21 @@ type SubscriptionPaymentLink struct {
 }
 
 type Subscription struct {
-	ID                  string                    `json:"id"`
-	Tier                string                    `json:"tier"`
-	Status              string                    `json:"status"`
-	StripePaymentLink   string                    `json:"stripe_payment_link,omitempty"`
-	StartedAt           *string                   `json:"started_at"`
-	ExpiresAt           *string                   `json:"expires_at"`
-	CreatedOn           string                    `json:"created_on"`
-	DefaultQuantity     string                    `json:"default_quantity,omitempty"`   // Django DecimalField as string
-	DefaultPreferences  []SubscriptionPreference  `json:"default_preferences,omitempty"`   // From GetSubscription endpoint
+	ID                 string                   `json:"id"`
+	Tier               string                   `json:"tier"`
+	Status             string                   `json:"status"`
+	StripePaymentLink  string                   `json:"stripe_payment_link,omitempty"`
+	StartedAt          *string                  `json:"started_at"`
+	ExpiresAt          *string                  `json:"expires_at"`
+	CreatedOn          string                   `json:"created_on"`
+	DefaultQuantity    int                      `json:"default_quantity,omitempty"`
+	DefaultPreferences []SubscriptionPreference `json:"default_preferences,omitempty"` // From GetSubscription endpoint
 }
 
 // SubscriptionPreference represents a default coffee preference for a subscription
 type SubscriptionPreference struct {
 	ID            string `json:"id"`
-	Quantity      string `json:"quantity"`    // Django DecimalField as string
+	Quantity      int    `json:"quantity"`
 	GrindType     string `json:"grind_type"`
 	BrewingMethod string `json:"brewing_method"`
 	Notes         string `json:"notes,omitempty"`
@@ -47,27 +47,12 @@ type SubscriptionPreference struct {
 
 // GetTotalQuantity returns the total quantity as an int
 func (s *Subscription) GetTotalQuantity() int {
-	if s.DefaultQuantity == "" {
-		return 0
-	}
-	// Parse and round to nearest int
-	var qty float64
-	if _, err := fmt.Sscanf(s.DefaultQuantity, "%f", &qty); err != nil {
-		return 0
-	}
-	return int(qty + 0.5)
+	return s.DefaultQuantity
 }
 
 // GetQuantity returns the quantity for a preference as an int
 func (p *SubscriptionPreference) GetQuantity() int {
-	if p.Quantity == "" {
-		return 0
-	}
-	var qty float64
-	if _, err := fmt.Sscanf(p.Quantity, "%f", &qty); err != nil {
-		return 0
-	}
-	return int(qty + 0.5)
+	return p.Quantity
 }
 
 // AvailablePlan represents both subscription tiers and one-time purchase products

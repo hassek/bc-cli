@@ -98,6 +98,9 @@ func displaySubscriptionDetails(sub api.AvailableSubscription, activeSub api.Sub
 		}
 	}
 
+	// Pre-render description to support template syntax (highlights, etc.)
+	renderedDescription := templates.RenderDescription(sub.Description)
+
 	// Use viewport for scrollable display
 	if err := templates.RenderInViewport(sub.Name, templates.SubscriptionDetailsTemplate, struct {
 		Name          string
@@ -111,7 +114,7 @@ func displaySubscriptionDetails(sub api.AvailableSubscription, activeSub api.Sub
 		Currency:      sub.Currency,
 		Price:         sub.Price,
 		BillingPeriod: sub.BillingPeriod,
-		Description:   sub.Description,
+		Description:   renderedDescription,
 		ActiveSub:     activeData,
 	}); err != nil {
 		fmt.Printf("Error rendering template: %v\n", err)
@@ -203,6 +206,7 @@ func createOrderAndSubscribe(cfg *config.Config, client *api.Client, tier api.Av
 	fmt.Print("\nCreating order... ")
 	order, err := client.CreateOrder(api.CreateOrderRequest{
 		Tier:          tier.Tier,
+		ProductID:     tier.ID,
 		TotalQuantity: totalQuantity,
 		LineItems:     lineItems,
 	})

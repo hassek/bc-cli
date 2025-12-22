@@ -7,7 +7,9 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/hassek/bc-cli/tui/components"
+	"github.com/hassek/bc-cli/tui/styles"
 	"github.com/hassek/bc-cli/utils"
 )
 
@@ -38,13 +40,74 @@ var funcMap = template.FuncMap{
 		return utils.WrapText(text, width)
 	},
 	"wrapAuto": func(text string) string {
-		// Auto-detect terminal width and use 60 as max for better readability
+		// Auto-detect terminal width and use most of it with margins
 		termWidth := utils.GetTerminalWidth()
-		maxWidth := 60
-		if termWidth < maxWidth {
-			maxWidth = termWidth - 4 // Leave some margin
+		// Use 90% of terminal width with reasonable min/max bounds
+		maxWidth := int(float64(termWidth) * 0.9)
+		if maxWidth < 60 {
+			maxWidth = 60 // Minimum width for readability
+		}
+		if maxWidth > 120 {
+			maxWidth = 120 // Maximum width for readability
 		}
 		return utils.WrapText(text, maxWidth)
+	},
+	// Style functions for inline text formatting
+	"highlight": func(text string) string {
+		return styles.ActiveStyle.Render(text) // Bold cyan
+	},
+	"emphasis": func(text string) string {
+		return lipgloss.NewStyle().
+			Italic(true).
+			Foreground(lipgloss.Color("247")).
+			Render(text)
+	},
+	"section": func(text string) string {
+		return lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("214")). // Orange/yellow
+			Render(text)
+	},
+	"bold": func(text string) string {
+		return lipgloss.NewStyle().Bold(true).Render(text)
+	},
+	"faint": func(text string) string {
+		return styles.FaintStyle.Render(text)
+	},
+	"cyan": func(text string) string {
+		return lipgloss.NewStyle().Foreground(styles.Cyan).Render(text)
+	},
+	"green": func(text string) string {
+		return lipgloss.NewStyle().Foreground(styles.Green).Render(text)
+	},
+	"yellow": func(text string) string {
+		return lipgloss.NewStyle().Foreground(styles.Yellow).Render(text)
+	},
+	"red": func(text string) string {
+		return lipgloss.NewStyle().Foreground(styles.Red).Render(text)
+	},
+	// Paragraph styling with wrapping
+	"paragraph": func(text string, width int) string {
+		style := lipgloss.NewStyle().
+			Width(width).
+			MarginBottom(1)
+		return style.Render(text)
+	},
+	"paragraphAuto": func(text string) string {
+		// Auto-detect terminal width and use most of it with margins
+		termWidth := utils.GetTerminalWidth()
+		// Use 90% of terminal width with reasonable min/max bounds
+		maxWidth := int(float64(termWidth) * 0.9)
+		if maxWidth < 60 {
+			maxWidth = 60 // Minimum width for readability
+		}
+		if maxWidth > 120 {
+			maxWidth = 120 // Maximum width for readability
+		}
+		style := lipgloss.NewStyle().
+			Width(maxWidth).
+			MarginBottom(1)
+		return style.Render(text)
 	},
 }
 
@@ -78,4 +141,23 @@ func RenderInViewport(title, tmpl string, data any) error {
 		return err
 	}
 	return components.ShowTextViewer(title, content)
+}
+
+// RenderDescription renders a description string that may contain template syntax.
+// If the description contains template markers ({{ }}), it renders them.
+// Otherwise, it returns the description as-is.
+// This allows backend CMS to send descriptions with highlighting and formatting.
+func RenderDescription(description string) string {
+	// Check if description contains template syntax
+	if !strings.Contains(description, "{{") {
+		return description
+	}
+
+	// Render as template
+	rendered, err := RenderToString(description, nil)
+	if err != nil {
+		// If template rendering fails, return original description
+		return description
+	}
+	return rendered
 }

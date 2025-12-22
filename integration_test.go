@@ -19,7 +19,14 @@ import (
 // This test requires BASE_HOSTNAME to be set to http://localhost:8000 for local testing
 // or to be run against a staging/production environment
 //
-// Run with: BASE_HOSTNAME=http://localhost:8000 RUN_INTEGRATION_TESTS=true go test -v -run TestE2EFullFlow
+// Environment variables:
+//   - RUN_INTEGRATION_TESTS=true (required)
+//   - BASE_HOSTNAME=http://localhost:8000 (optional, defaults to production)
+//   - TEST_PRODUCT_ID=<product-id> (optional, uses "Butler" product if not set)
+//   - TEST_QA_USERNAME=<username> (optional, creates random user if not set)
+//   - TEST_QA_PASSWORD=<password> (optional, creates random user if not set)
+//
+// Run with: BASE_HOSTNAME=http://localhost:8000 RUN_INTEGRATION_TESTS=true TEST_QA_USERNAME=qa_user TEST_QA_PASSWORD=qa_pass go test -v -run TestE2EFullFlow
 func TestE2EFullFlow(t *testing.T) {
 	// Skip if not explicitly enabled
 	if os.Getenv("RUN_INTEGRATION_TESTS") != "true" {
@@ -37,33 +44,48 @@ func TestE2EFullFlow(t *testing.T) {
 	testCfg := createTestConfig(t)
 	client := api.NewClient(testCfg)
 
-	// Generate unique test credentials
-	timestamp := time.Now().Unix()
-	randSuffix := rand.Intn(10000)
-	username := fmt.Sprintf("test_user_%d_%d", timestamp, randSuffix)
-	email := fmt.Sprintf("test_%d_%d@butler.test", timestamp, randSuffix)
-	password := "TestPassword123!@#"
+	// Check for QA user credentials
+	qaUsername := os.Getenv("TEST_QA_USERNAME")
+	qaPassword := os.Getenv("TEST_QA_PASSWORD")
 
-	t.Logf("Generated test credentials: username=%s, email=%s", username, email)
+	var username, password string
 
-	// Step 1: Test user registration
-	t.Logf("\n=== Step 1: User Registration ===")
-	testUserRegistration(t, client, username, email, password)
+	if qaUsername != "" && qaPassword != "" {
+		// Use dedicated QA user
+		t.Logf("Using QA test user: %s", qaUsername)
+		username = qaUsername
+		password = qaPassword
 
-	// Register cleanup function to delete test user at the end
-	// registerCleanup(t, client, username)
+		// Step 1: Login with QA user
+		t.Logf("\n=== Step 1: Login with QA User ===")
+		testUserLogin(t, client, username, password)
+	} else {
+		// Generate unique test credentials for one-time user
+		timestamp := time.Now().Unix()
+		randSuffix := rand.Intn(10000)
+		username = fmt.Sprintf("test_user_%d_%d", timestamp, randSuffix)
+		email := fmt.Sprintf("test_%d_%d@butler.test", timestamp, randSuffix)
+		password = "TestPassword123!@#"
 
-	// Step 2: Test login (verify we can login with the newly created user)
-	t.Logf("\n=== Step 2: User Login ===")
-	testUserLogin(t, client, username, password)
+		t.Logf("Generated test credentials: username=%s, email=%s", username, email)
+		t.Log("Tip: Set TEST_QA_USERNAME and TEST_QA_PASSWORD to use a dedicated QA user")
+
+		// Step 1: Test user registration
+		t.Logf("\n=== Step 1: User Registration ===")
+		testUserRegistration(t, client, username, email, password)
+
+		// Step 2: Test login (verify we can login with the newly created user)
+		t.Logf("\n=== Step 2: User Login ===")
+		testUserLogin(t, client, username, password)
+	}
 
 	// Step 3: Get available subscriptions
 	t.Logf("\n=== Step 3: Get Available Subscriptions ===")
-	selectedTier := testGetAvailableSubscriptions(t, client)
+	selectedPlan := testGetAvailableSubscriptions(t, client)
 
 	// Step 4: Create an order with preferences
 	t.Logf("\n=== Step 4: Create Order ===")
-	orderID := testCreateOrder(t, client, selectedTier)
+	orderID := testCreateOrder(t, client, selectedPlan)
 
 	// Step 5: Create checkout session (note: we won't complete payment in automated tests)
 	t.Logf("\n=== Step 5: Create Checkout Session ===")
@@ -149,7 +171,15 @@ func TestE2ESubscriptionManagement(t *testing.T) {
 // 8. Update subscription preferences
 // 9. Cancel subscription
 //
-// Run with: BASE_HOSTNAME=http://localhost:8000 RUN_INTEGRATION_TESTS=true INTERACTIVE=true go test -v -run TestE2EInteractiveFullLifecycle -timeout 30m
+// Environment variables:
+//   - RUN_INTEGRATION_TESTS=true (required)
+//   - INTERACTIVE=true (required)
+//   - BASE_HOSTNAME=http://localhost:8000 (optional, defaults to production)
+//   - TEST_PRODUCT_ID=<product-id> (optional, uses "Butler" product if not set)
+//   - TEST_QA_USERNAME=<username> (optional, creates random user if not set)
+//   - TEST_QA_PASSWORD=<password> (optional, creates random user if not set)
+//
+// Run with: BASE_HOSTNAME=http://localhost:8000 RUN_INTEGRATION_TESTS=true INTERACTIVE=true TEST_QA_USERNAME=qa_user TEST_QA_PASSWORD=qa_pass go test -v -run TestE2EInteractiveFullLifecycle -timeout 30m
 func TestE2EInteractiveFullLifecycle(t *testing.T) {
 	if os.Getenv("RUN_INTEGRATION_TESTS") != "true" {
 		t.Skip("Skipping integration test. Set RUN_INTEGRATION_TESTS=true to run")
@@ -169,44 +199,85 @@ func TestE2EInteractiveFullLifecycle(t *testing.T) {
 	testCfg := createTestConfig(t)
 	client := api.NewClient(testCfg)
 
-	// Generate unique test credentials
-	username := "test_user"
-	email := "test_user@butler.test"
-	password := "TestPassword123!@#"
+	// Check for QA user credentials
+	qaUsername := os.Getenv("TEST_QA_USERNAME")
+	qaPassword := os.Getenv("TEST_QA_PASSWORD")
+
+	var username, password, userID string
 
 	separator := "=" + strings.Repeat("=", 70)
 	t.Log(separator)
 	t.Log("INTERACTIVE INTEGRATION TEST - FULL SUBSCRIPTION LIFECYCLE")
 	t.Log(separator)
 	t.Logf("")
-	t.Logf("This test will:")
-	t.Logf("  1. Create a new user account")
-	t.Logf("  2. Create an order and checkout session")
-	t.Logf("  3. Open Stripe checkout in your browser")
-	t.Logf("  4. Wait for you to complete payment")
-	t.Logf("  5. Test subscription management (pause, resume, update)")
-	t.Logf("  6. Cancel the subscription")
-	t.Logf("")
-	t.Logf("Test credentials: %s / %s", username, password)
-	t.Log(separator)
-	t.Logf("")
 
-	// Step 1: User Registration
-	t.Logf("\n▶ Step 1: Creating user account...")
-	userID := testInteractiveUserRegistration(t, client, username, email, password)
-	t.Logf("✓ User created: %s\n", userID)
+	if qaUsername != "" && qaPassword != "" {
+		// Use dedicated QA user
+		username = qaUsername
+		password = qaPassword
 
-	// Register cleanup function to delete test user at the end
-	registerCleanup(t, client, username)
+		t.Logf("This test will:")
+		t.Logf("  1. Login with QA user account")
+		t.Logf("  2. Create an order and checkout session")
+		t.Logf("  3. Open Stripe checkout in your browser")
+		t.Logf("  4. Wait for you to complete payment")
+		t.Logf("  5. Test subscription management (pause, resume, update)")
+		t.Logf("  6. Cancel the subscription")
+		t.Logf("")
+		t.Logf("QA User: %s", username)
+		t.Log(separator)
+		t.Logf("")
+
+		// Step 1: Login with QA user
+		t.Logf("\n▶ Step 1: Logging in with QA user...")
+		loginReq := api.LoginRequest{
+			Username: username,
+			Password: password,
+		}
+		loginResp, err := client.Login(loginReq)
+		if err != nil {
+			t.Fatalf("❌ Failed to login with QA user: %v", err)
+		}
+		userID = loginResp.Data.UserID
+		t.Logf("✓ Logged in as: %s (ID: %s)\n", username, userID)
+	} else {
+		// Generate unique test credentials
+		timestamp := time.Now().Unix()
+		randSuffix := rand.Intn(10000)
+		username = fmt.Sprintf("test_user_%d_%d", timestamp, randSuffix)
+		email := fmt.Sprintf("test_%d_%d@butler.test", timestamp, randSuffix)
+		password = "TestPassword123!@#"
+
+		t.Logf("This test will:")
+		t.Logf("  1. Create a new user account")
+		t.Logf("  2. Create an order and checkout session")
+		t.Logf("  3. Open Stripe checkout in your browser")
+		t.Logf("  4. Wait for you to complete payment")
+		t.Logf("  5. Test subscription management (pause, resume, update)")
+		t.Logf("  6. Cancel the subscription")
+		t.Logf("")
+		t.Logf("Test credentials: %s / %s", username, password)
+		t.Logf("Tip: Set TEST_QA_USERNAME and TEST_QA_PASSWORD to use a dedicated QA user")
+		t.Log(separator)
+		t.Logf("")
+
+		// Step 1: User Registration
+		t.Logf("\n▶ Step 1: Creating user account...")
+		userID = testInteractiveUserRegistration(t, client, username, email, password)
+		t.Logf("✓ User created: %s\n", userID)
+
+		// Register cleanup function to delete test user at the end
+		registerCleanup(t, client, username)
+	}
 
 	// Step 2: Get available subscriptions
 	t.Logf("\n▶ Step 2: Fetching available subscriptions...")
-	selectedTier := testInteractiveGetSubscriptions(t, client)
-	t.Logf("✓ Selected tier: %s\n", selectedTier)
+	selectedPlan := testInteractiveGetSubscriptions(t, client)
+	t.Logf("✓ Selected tier: %s (ID: %s)\n", selectedPlan.Tier, selectedPlan.ID)
 
 	// Step 3: Create order
 	t.Logf("\n▶ Step 3: Creating order with coffee preferences...")
-	orderID := testInteractiveCreateOrder(t, client, selectedTier)
+	orderID := testInteractiveCreateOrder(t, client, selectedPlan)
 	t.Logf("✓ Order created: %s\n", orderID)
 
 	// Step 4: Create checkout session and wait for payment
@@ -346,7 +417,7 @@ func testUserLogin(t *testing.T, client *api.Client, username, password string) 
 	t.Logf("✓ Refresh token expires at: %s", resp.Data.RefreshTokenExpiresAt)
 }
 
-func testGetAvailableSubscriptions(t *testing.T, client *api.Client) string {
+func testGetAvailableSubscriptions(t *testing.T, client *api.Client) *api.AvailablePlan {
 	subscriptions, err := client.GetAvailableSubscriptions()
 	if err != nil {
 		t.Fatalf("❌ Failed to get available subscriptions: %v", err)
@@ -359,8 +430,8 @@ func testGetAvailableSubscriptions(t *testing.T, client *api.Client) string {
 	t.Logf("✓ Found %d available subscription(s)", len(subscriptions))
 
 	for i, sub := range subscriptions {
-		t.Logf("  [%d] Tier: %s, Name: %s, Price: %s %s/%s",
-			i+1, sub.Tier, sub.Name, sub.Price, sub.Currency, sub.BillingPeriod)
+		t.Logf("  [%d] Tier: %s, Name: %s, Price: %s %s/%s, ID: %s",
+			i+1, sub.Tier, sub.Name, sub.Price, sub.Currency, sub.BillingPeriod, sub.ID)
 
 		// Validate each subscription
 		if sub.ID == "" {
@@ -380,16 +451,39 @@ func testGetAvailableSubscriptions(t *testing.T, client *api.Client) string {
 		}
 	}
 
-	// Return the first tier for testing
-	selectedTier := subscriptions[0].Tier
-	t.Logf("✓ Selected tier for testing: %s", selectedTier)
-	return selectedTier
+	// Check if a specific test product ID is set
+	testProductID := os.Getenv("TEST_PRODUCT_ID")
+	if testProductID != "" {
+		t.Logf("Looking for TEST_PRODUCT_ID: %s", testProductID)
+		for _, sub := range subscriptions {
+			if sub.ID == testProductID {
+				t.Logf("✓ Selected tier for testing: %s (ID: %s)", sub.Tier, sub.ID)
+				return &sub
+			}
+		}
+		t.Fatalf("❌ TEST_PRODUCT_ID %s not found in available subscriptions", testProductID)
+	}
+
+	// For QA/local testing, prefer the product named "Butler"
+	for _, sub := range subscriptions {
+		if sub.Name == "Butler" {
+			t.Logf("✓ Selected tier for testing: %s (ID: %s)", sub.Tier, sub.ID)
+			t.Logf("Tip: Set TEST_PRODUCT_ID environment variable to use a different product")
+			return &sub
+		}
+	}
+
+	// Fallback to first plan if "Butler" not found
+	t.Logf("✓ Selected tier for testing: %s (ID: %s)", subscriptions[0].Tier, subscriptions[0].ID)
+	t.Logf("Tip: Set TEST_PRODUCT_ID environment variable to use a specific product for testing")
+	return &subscriptions[0]
 }
 
-func testCreateOrder(t *testing.T, client *api.Client, tier string) string {
+func testCreateOrder(t *testing.T, client *api.Client, plan *api.AvailablePlan) string {
 	// Create an order with multiple preferences
 	req := api.CreateOrderRequest{
-		Tier:          tier,
+		Tier:          plan.Tier,
+		ProductID:     plan.ID,
 		TotalQuantity: 5,
 		LineItems: []api.OrderLineItem{
 			{
@@ -416,8 +510,8 @@ func testCreateOrder(t *testing.T, client *api.Client, tier string) string {
 	if order.ID == "" {
 		t.Fatalf("❌ Expected order ID")
 	}
-	if order.Tier != tier {
-		t.Fatalf("❌ Expected tier %s, got %s", tier, order.Tier)
+	if order.Tier != plan.Tier {
+		t.Fatalf("❌ Expected tier %s, got %s", plan.Tier, order.Tier)
 	}
 	if order.Status == "" {
 		t.Fatalf("❌ Expected order status")
@@ -427,17 +521,17 @@ func testCreateOrder(t *testing.T, client *api.Client, tier string) string {
 	}
 
 	totalQty := order.GetTotalQuantity()
-	if totalQty != 5.0 {
-		t.Fatalf("❌ Expected total quantity 5.0, got %f", totalQty)
+	if totalQty != 5 {
+		t.Fatalf("❌ Expected total quantity 5, got %d", totalQty)
 	}
 
 	t.Logf("✓ Order created successfully: ID=%s", order.ID)
 	t.Logf("✓ Order tier: %s, status: %s", order.Tier, order.Status)
-	t.Logf("✓ Total quantity: %.1f kg", totalQty)
+	t.Logf("✓ Total quantity: %d kg", totalQty)
 
 	for i, item := range order.LineItems {
 		qty := item.GetQuantity()
-		t.Logf("  [%d] %s → %.1f kg (%s)", i+1, item.BrewingMethod, qty, item.GrindType)
+		t.Logf("  [%d] %s → %d kg (%s)", i+1, item.BrewingMethod, qty, item.GrindType)
 	}
 
 	return order.ID
@@ -666,7 +760,7 @@ func testInteractiveUserRegistration(t *testing.T, client *api.Client, username,
 	return resp.Data.ID
 }
 
-func testInteractiveGetSubscriptions(t *testing.T, client *api.Client) string {
+func testInteractiveGetSubscriptions(t *testing.T, client *api.Client) *api.AvailablePlan {
 	subscriptions, err := client.GetAvailableSubscriptions()
 	if err != nil {
 		t.Fatalf("❌ Failed to get available subscriptions: %v", err)
@@ -678,16 +772,37 @@ func testInteractiveGetSubscriptions(t *testing.T, client *api.Client) string {
 
 	t.Logf("  Available tiers:")
 	for i, sub := range subscriptions {
-		t.Logf("    [%d] %s - %s %s/%s", i+1, sub.Name, sub.Price, sub.Currency, sub.BillingPeriod)
+		t.Logf("    [%d] %s - %s %s/%s (ID: %s)", i+1, sub.Name, sub.Price, sub.Currency, sub.BillingPeriod, sub.ID)
 	}
 
-	// Use the first tier
-	return subscriptions[0].Tier
+	// Check if a specific test product ID is set
+	testProductID := os.Getenv("TEST_PRODUCT_ID")
+	if testProductID != "" {
+		for _, sub := range subscriptions {
+			if sub.ID == testProductID {
+				t.Logf("  Using TEST_PRODUCT_ID: %s", testProductID)
+				return &sub
+			}
+		}
+		t.Fatalf("❌ TEST_PRODUCT_ID %s not found in available subscriptions", testProductID)
+	}
+
+	// For QA/local testing, prefer the product named "Butler"
+	for _, sub := range subscriptions {
+		if sub.Name == "Butler" {
+			t.Logf("  Using product: %s (ID: %s)", sub.Name, sub.ID)
+			return &sub
+		}
+	}
+
+	// Use the first plan as fallback
+	return &subscriptions[0]
 }
 
-func testInteractiveCreateOrder(t *testing.T, client *api.Client, tier string) string {
+func testInteractiveCreateOrder(t *testing.T, client *api.Client, plan *api.AvailablePlan) string {
 	req := api.CreateOrderRequest{
-		Tier:          tier,
+		Tier:          plan.Tier,
+		ProductID:     plan.ID,
 		TotalQuantity: 5,
 		LineItems: []api.OrderLineItem{
 			{
@@ -712,10 +827,10 @@ func testInteractiveCreateOrder(t *testing.T, client *api.Client, tier string) s
 
 	t.Logf("  Order ID: %s", order.ID)
 	t.Logf("  Tier: %s", order.Tier)
-	t.Logf("  Total quantity: %.1f kg/month", order.GetTotalQuantity())
+	t.Logf("  Total quantity: %d kg/month", order.GetTotalQuantity())
 	t.Logf("  Line items:")
 	for i, item := range order.LineItems {
-		t.Logf("    [%d] %s → %.1f kg (%s)", i+1, item.BrewingMethod, item.GetQuantity(), item.GrindType)
+		t.Logf("    [%d] %s → %d kg (%s)", i+1, item.BrewingMethod, item.GetQuantity(), item.GrindType)
 	}
 
 	return order.ID

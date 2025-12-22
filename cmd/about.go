@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"strings"
-
-	"github.com/hassek/bc-cli/tui/components"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/hassek/bc-cli/templates"
 	"github.com/spf13/cobra"
 )
 
@@ -20,96 +17,35 @@ func init() {
 }
 
 func runAbout(cmd *cobra.Command, args []string) error {
-	content := formatAboutContent()
-	return components.ShowTextViewer("☕ About Butler Coffee", content)
+	// In the future, this content would come from the API
+	// For now, we demonstrate the template capabilities
+	tmpl := getAboutTemplate()
+	return templates.RenderInViewport("☕ About Butler Coffee", tmpl, nil)
 }
 
-func formatAboutContent() string {
-	var b strings.Builder
+// getAboutTemplate returns the About Us content as a template string.
+// In production, this would be fetched from the backend CMS API.
+// The backend would store this template and return it via an endpoint.
+func getAboutTemplate() string {
+	return `
+{{paragraphAuto "\nAt Butler Coffee we keep things simple: we only share what we genuinely love, and we have fun doing it."}}
 
-	// Styles
-	// titleStyle := lipgloss.NewStyle().
-	// 	Bold(true).
-	// 	Foreground(lipgloss.Color("86")). // Cyan
-	// 	MarginBottom(1)
+{{section "Our First Principle"}}
 
-	sectionStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("214")). // Orange/yellow
-		MarginTop(1).
-		MarginBottom(1)
+{{paragraphAuto (printf "%s — nothing goes on our stock unless we'd happily drink it ourselves. Every coffee, machine, and product we offer has been tested, tasted and enjoyed by us first. If it doesn't meet our own standards, it never makes it to yours." (highlight "We only offer what we like"))}}
 
-	paragraphStyle := lipgloss.NewStyle().
-		Width(70).
-		MarginBottom(1)
+{{section "Our Second Principle"}}
 
-	principleStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("86")). // Cyan
-		Bold(true)
+{{paragraphAuto (printf "Just as important: %s.\nThat means we sometimes try ideas that don't make much sense on paper, simply because they make us smile. Coffee is meant to be enjoyed, and we want that spirit to show through everything we do." (highlight "we should enjoy the ride"))}}
 
-	emphasisStyle := lipgloss.NewStyle().
-		Italic(true).
-		Foreground(lipgloss.Color("247")) // Light gray
+{{section "What We Do"}}
 
-	// // Title
-	// b.WriteString(titleStyle.Render("☕ About Butler Coffee"))
-	// b.WriteString("\n")
+{{paragraphAuto "Today, we focus on bringing high-quality specialty coffee to both homes and workplaces through curated subscriptions and office setups offering beans from all around the world. Whether it's a single bag or a full machine solution, our goal is to deliver products that make your daily coffee something worth looking forward to."}}
 
-	// Introduction
-	intro := "\nAt Butler Coffee we keep things simple: we only share what we genuinely love, and we have fun doing it."
-	b.WriteString(paragraphStyle.Render(intro))
-	b.WriteString("\n")
 
-	// First Principle
-	b.WriteString(sectionStyle.Render("Our First Principle"))
-	b.WriteString("\n")
+{{paragraphAuto (emphasis "Our end goal is to make you make good coffee.")}}
 
-	principle1 := principleStyle.Render("We only offer what we like") + " — nothing goes on our stock unless we'd " +
-		"happily drink it ourselves. Every coffee, machine, and product we offer " +
-		"has been tested, tasted and enjoyed by us first. If it doesn't meet " +
-		"our own standards, it never makes it to yours."
-	b.WriteString(paragraphStyle.Render(principle1))
-	b.WriteString("\n")
 
-	// Second Principle
-	b.WriteString(sectionStyle.Render("Our Second Principle"))
-	b.WriteString("\n")
-
-	principle2 := "Just as important: " + principleStyle.Render("we should enjoy the ride") + ".\nThat means " +
-		"we sometimes try ideas that don't make much sense on paper, simply " +
-		"because they make us smile. Coffee is meant to be enjoyed, and we want " +
-		"that spirit to show through everything we do."
-	b.WriteString(paragraphStyle.Render(principle2))
-	b.WriteString("\n")
-
-	// What We Do
-	b.WriteString(sectionStyle.Render("What We Do"))
-	b.WriteString("\n")
-
-	whatWeDo := "Today, we focus on bringing high-quality specialty coffee to both homes " +
-		"and workplaces through curated subscriptions and office setups " +
-		"offering beans from all around the world. Whether it's a single " +
-		"bag or a full machine solution, our goal is to deliver products that make your " +
-		"daily coffee something worth looking forward to."
-	b.WriteString(paragraphStyle.Render(whatWeDo))
-	b.WriteString("\n")
-
-	// End Goal
-	b.WriteString("\n")
-	endGoal := emphasisStyle.Render("Our end goal is to make you make good coffee.")
-	b.WriteString(paragraphStyle.Render(endGoal))
-	b.WriteString("\n\n")
-
-	// Footer decoration
-	footerStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("241")). // Faint
-		Align(lipgloss.Center).
-		Width(70)
-
-	footer := "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-		"                Made with ☕ and love\n" +
-		"                butler.coffee"
-	b.WriteString(footerStyle.Render(footer))
-
-	return b.String()
+{{faint "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n                Made with ☕ and love\n                butler.coffee"}}
+`
 }

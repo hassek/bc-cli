@@ -11,10 +11,9 @@ import (
 	"github.com/hassek/bc-cli/api"
 	"github.com/hassek/bc-cli/cmd/order"
 	"github.com/hassek/bc-cli/config"
-	"github.com/hassek/bc-cli/tui/components"
+	"github.com/hassek/bc-cli/templates"
 	"github.com/hassek/bc-cli/tui/models"
 	"github.com/hassek/bc-cli/tui/prompts"
-	"github.com/hassek/bc-cli/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -79,25 +78,21 @@ func runProducts(cmd *cobra.Command, args []string) error {
 }
 
 func displayProductDetails(product api.AvailableSubscription) {
-	// Get terminal width for wrapping
-	termWidth := utils.GetTerminalWidth()
-	maxWidth := 100
-	if termWidth < maxWidth {
-		maxWidth = termWidth - 4 // Leave some margin
-	}
+	// Pre-render description to support template syntax (highlights, etc.)
+	renderedDescription := templates.RenderDescription(product.Description)
 
-	content := "\n" + strings.Repeat("═", maxWidth) + "\n"
-	content += fmt.Sprintf("\n  %s\n\n", product.Name)
-	content += strings.Repeat("─", maxWidth) + "\n"
-	content += fmt.Sprintf("\n  Price: %s %s\n\n", product.Currency, product.Price)
-
-	// Wrap the description to fit terminal width
-	wrappedDesc := utils.WrapTextWithIndent(product.Description, maxWidth-2, "  ")
-	content += fmt.Sprintf("  %s\n\n", wrappedDesc)
-	content += strings.Repeat("═", maxWidth) + "\n"
-
-	// Use viewport for scrollable display
-	if err := components.ShowTextViewer(product.Name, content); err != nil {
+	// Use viewport for scrollable display with template
+	if err := templates.RenderInViewport(product.Name, templates.ProductDetailsTemplate, struct {
+		Name        string
+		Currency    string
+		Price       string
+		Description string
+	}{
+		Name:        product.Name,
+		Currency:    product.Currency,
+		Price:       product.Price,
+		Description: renderedDescription,
+	}); err != nil {
 		fmt.Printf("Error displaying product details: %v\n", err)
 	}
 }

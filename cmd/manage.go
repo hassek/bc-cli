@@ -112,7 +112,7 @@ func selectSubscriptionToManage(subscriptions []api.Subscription) (*api.Subscrip
 		if sub.ExpiresAt != nil {
 			item.ExpiresAt = utils.FormatTimestamp(*sub.ExpiresAt)
 		}
-		if sub.DefaultQuantity != "" {
+		if sub.DefaultQuantity > 0 {
 			item.TotalQuantity = sub.GetTotalQuantity()
 			item.HasOrderDetails = true
 		}
@@ -573,7 +573,7 @@ func displaySubscriptionInfo(client *api.Client, subscription *api.Subscription)
 	}
 
 	// Include order details if available
-	if subscription.DefaultQuantity != "" && len(subscription.DefaultPreferences) > 0 {
+	if subscription.DefaultQuantity > 0 && len(subscription.DefaultPreferences) > 0 {
 		data.HasOrderDetails = true
 		data.TotalQuantity = subscription.GetTotalQuantity()
 
