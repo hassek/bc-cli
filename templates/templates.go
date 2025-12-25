@@ -18,6 +18,7 @@ var funcMap = template.FuncMap{
 	"upper":  strings.ToUpper,
 	"lower":  strings.ToLower,
 	"repeat": strings.Repeat,
+	"printf": fmt.Sprintf,
 	"add": func(a, b int) int {
 		return a + b
 	},
@@ -73,6 +74,13 @@ var funcMap = template.FuncMap{
 	},
 	"faint": func(text string) string {
 		return styles.FaintStyle.Render(text)
+	},
+	"faintNoWrap": func(text string) string {
+		// Faint text without wrapping - useful for dividers/lines
+		style := lipgloss.NewStyle().
+			Foreground(styles.Faint).
+			Width(0) // Don't wrap
+		return style.Render(text)
 	},
 	"cyan": func(text string) string {
 		return lipgloss.NewStyle().Foreground(styles.Cyan).Render(text)
@@ -156,8 +164,8 @@ func RenderDescription(description string) string {
 	// Render as template
 	rendered, err := RenderToString(description, nil)
 	if err != nil {
-		// If template rendering fails, return original description
-		return description
+		// If template rendering fails, show error for debugging
+		return fmt.Sprintf("Template rendering error: %v\n\nOriginal content:\n%s", err, description)
 	}
 	return rendered
 }
