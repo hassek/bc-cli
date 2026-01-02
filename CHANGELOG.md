@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/ButlerCoffee/bc-cli/compare/v1.1.0...v1.1.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* update config to use homebrew casks ([66093b7](https://github.com/ButlerCoffee/bc-cli/commit/66093b78eb2e7d9750e3562b5d58f0f71ea7639e))
+
 # [1.1.0](https://github.com/ButlerCoffee/bc-cli/compare/v1.0.1...v1.1.0) (2026-01-02)
 
 
