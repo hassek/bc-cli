@@ -1,4 +1,10 @@
-Butler coffee cli tool
+# Butler Coffee CLI
+
+[![Latest Release](https://img.shields.io/github/v/release/butlercoffee/bc-cli?label=version)](https://github.com/butlercoffee/bc-cli/releases)
+[![Go Version](https://img.shields.io/badge/go-1.25.4-00ADD8?logo=go)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Built with Bubble Tea](https://img.shields.io/badge/Built%20with-Bubble%20Tea-FF69B4)](https://github.com/charmbracelet/bubbletea)
+
 ```
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWX0kkkO0XWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNKko:'......'cxXMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
@@ -52,7 +58,43 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNK0OkxddooooddxkO0KXNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 ```
 
-# What you are getting into
+> A delightful command-line interface for discovering, learning about, and ordering specialty coffee from [Butler Coffee](https://butler.coffee) - all from your terminal.
+
+---
+
+## Table of Contents
+
+- [Why Butler Coffee CLI?](#why-butler-coffee-cli)
+- [Installation](#installation)
+  - [Via Homebrew (macOS)](#via-homebrew-macos)
+  - [Download Pre-compiled Binary](#download-pre-compiled-binary)
+  - [Build from Source](#build-from-source)
+- [Getting Started](#getting-started)
+  - [First Time Setup](#first-time-setup)
+  - [Available Commands](#available-commands)
+- [Learn About Coffee](#learn-about-coffee)
+- [Coffee Subscriptions](#coffee-subscriptions)
+- [Features](#features)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Why Butler Coffee CLI?
+
+Butler Coffee CLI brings the entire specialty coffee experience directly to your terminal. Whether you're a developer who lives in the command line or a coffee enthusiast looking for a unique way to explore coffee, this CLI offers:
+
+- **Interactive Learning**: Browse a comprehensive coffee knowledge base with articles on brewing methods, grinders, roasting, and more - all from your terminal
+- **Coffee Subscriptions**: Configure and manage coffee subscriptions with an intuitive TUI (Terminal User Interface)
+- **Complete Control**: Pause, resume, update, or cancel subscriptions without leaving your workflow
+- **Delightful Experience**: Animated duck mascot and smooth Bubble Tea-powered interface make it a joy to use
+- **Developer-Friendly**: Built with Go, designed for developers by developers
+- **No Context Switching**: Order coffee, manage subscriptions, and learn about coffee without opening a browser
+
+---
+
+## What you are getting into
 
 This is a CLI tool to find, learn, and order coffee from butler.coffee directly from your terminal! Whether you're a coffee enthusiast looking to deepen your knowledge or someone seeking the perfect coffee subscription, Butler Coffee CLI brings the entire coffee experience to your command line.
 
@@ -144,14 +186,16 @@ Note: We are constantly adding more content!
 
 Butler Coffee offers three distinct subscription tiers to match your coffee journey:
 
-### Butler Coffee
+### Explorer Tier
 Our foundational tier delivers carefully curated, high-quality coffee selections. Perfect for those who appreciate great coffee without breaking the bank. Each shipment brings you exceptional beans that have been thoughtfully selected to expand your palate.
 
-### Collection Coffee
-Step up to our premium tier featuring rare and exclusive coffee selections from renowned origins. This subscription brings you limited-edition beans, micro-lot coffees, and unique varietals that aren't available in our standard offerings. Ideal for enthusiasts who want to explore the finer side of specialty coffee.
+### Alpine Tier
+Step up to our next level tier featuring rare and exclusive coffee selections from renowned origins. This subscription brings you limited-edition beans, micro-lot coffees, and unique varietals that aren't available in our standard offerings. Ideal for enthusiasts who want to explore the finer side of specialty coffee.
 
 ### "I don't care how much it costs, just give me the best of the best"
 The ultimate coffee experience. This tier features the absolute finest coffees in the world—competition-winning beans, ultra-rare micro-lots, and exclusive releases that money can rarely buy. If you demand nothing but the absolute best and price is no object, this is your subscription.
+
+This tier may or may not be available depending on the season.
 
 ## Features
 
@@ -204,3 +248,60 @@ You can edit `~/.butler-coffee/config.json` to customize:
 - macOS (uses `open` for browser integration)
 - Linux (uses `xdg-open` for browser integration)
 - Windows (uses `rundll32` for browser integration)
+
+---
+
+## Contributing
+
+We welcome contributions! Whether it's bug reports, feature requests, or code contributions, we appreciate your help making Butler Coffee CLI better.
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
+
+### Development
+
+```bash
+# Clone the repository
+git clone https://github.com/butlercoffee/bc-cli.git
+cd bc-cli
+
+# Install dependencies and setup pre-commit hooks
+make install
+
+# Build the project
+make compile
+
+# Run tests
+go test ./...
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Keywords & Topics
+
+**For developers**: `cli`, `terminal`, `tui`, `golang`, `bubble-tea`, `command-line`, `coffee`, `cobra`
+
+**For coffee enthusiasts**: `specialty-coffee`, `coffee-subscription`, `coffee-learning`, `coffee-ordering`, `artisan-coffee`
+
+**Categories**: `productivity`, `terminal-app`, `interactive-cli`, `developer-tools`, `coffee-tech`
+
+---
+
+## Related Links
+
+- **Website**: [butler.coffee](https://butler.coffee)
+- **Issues**: [GitHub Issues](https://github.com/butlercoffee/bc-cli/issues)
+- **Releases**: [GitHub Releases](https://github.com/butlercoffee/bc-cli/releases)
+
+---
+
+<div align="center">
+
+Made with ☕️ and 🦆 by the Butler Coffee team
+
+</div>
