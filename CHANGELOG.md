@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/ButlerCoffee/bc-cli/compare/v1.1.3...v1.1.4) (2026-01-08)
+
+
+### Bug Fixes
+
+* doc enhancements ([7efb158](https://github.com/ButlerCoffee/bc-cli/commit/7efb15811acdde12ba91d75b2b6a0cac50f94c3d))
+
 ## [1.1.3](https://github.com/ButlerCoffee/bc-cli/compare/v1.1.2...v1.1.3) (2026-01-02)
 
 
